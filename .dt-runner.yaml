@@ -1,0 +1,15 @@
+app:
+  name: dt-runner
+  log: dt-runner.log
+  workspace: "/tmp"
+webhook:
+  token: 123456
+
+server:
+  host: 127.0.0.1
+  port: 9001
+  runtime: kubernetes
+
+kubernetes:
+  namespace: "default"
+  preffix: "dt-runner"

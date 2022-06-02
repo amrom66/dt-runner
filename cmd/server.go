@@ -6,35 +6,46 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	"strconv"
+	"strings"
 
+	"github.com/go-playground/webhooks/v6/gitlab"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // serverCmd represents the server command
 var serverCmd = &cobra.Command{
 	Use:   "server",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "server is used to run dt-runner as a daemon server",
+	Long:  `dt-runner will listen on a web port, which will be triggered by gitlab webhook.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("server called")
+
+		secret := viper.GetString("webhook.token")
+		hook, _ := gitlab.New(gitlab.Options.Secret(secret))
+		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			playload, err := hook.Parse(r, gitlab.PushEvents, gitlab.TagEvents)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			switch playload {
+			case gitlab.PushEvents:
+				fmt.Println("push event")
+			case gitlab.TagEvents:
+				fmt.Println("tag event")
+			default:
+				fmt.Println("unknown event")
+			}
+		})
+		port := strings.Join([]string{":", strconv.Itoa(viper.GetInt("server.port"))}, "")
+		fmt.Printf("dt-runner is running on port:%s, with token:%s\n", port, secret)
+		http.ListenAndServe(port, nil)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(serverCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// serverCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// serverCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
