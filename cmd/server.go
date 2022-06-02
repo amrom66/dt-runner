@@ -26,18 +26,24 @@ var serverCmd = &cobra.Command{
 		secret := viper.GetString("webhook.token")
 		hook, _ := gitlab.New(gitlab.Options.Secret(secret))
 		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			playload, err := hook.Parse(r, gitlab.PushEvents, gitlab.TagEvents)
+			payload, err := hook.Parse(r, gitlab.PushEvents, gitlab.TagEvents, gitlab.SystemHookEvents)
 			if err != nil {
 				log.Println(err)
 				return
 			}
-			switch playload {
-			case gitlab.PushEvents:
-				fmt.Println("push event")
-			case gitlab.TagEvents:
-				fmt.Println("tag event")
+			switch payload.(type) {
+			case gitlab.PushEventPayload:
+				fmt.Println("push event playload")
+				push := payload.(gitlab.PushEventPayload)
+				fmt.Printf("%+v", push)
+			case gitlab.TagEventPayload:
+				fmt.Println("tag event playload")
+				tag := payload.(gitlab.TagEventPayload)
+				fmt.Printf("%+v", tag)
+			case gitlab.SystemHookPayload:
+				fmt.Println("system event playload")
 			default:
-				fmt.Println("unknown event")
+				fmt.Println("unknown event playload")
 			}
 		})
 		port := strings.Join([]string{":", strconv.Itoa(viper.GetInt("server.port"))}, "")
