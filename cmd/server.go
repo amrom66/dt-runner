@@ -16,6 +16,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+var kubeconfig string
+
 // serverCmd represents the server command
 var serverCmd = &cobra.Command{
 	Use:   "server",
@@ -54,4 +56,7 @@ var serverCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(serverCmd)
+	serverCmd.PersistentFlags().StringVar(&kubeconfig, "kubeconfig", "", "kubeconfig file(default is $HOME/.kube/config)")
+
+	serverCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
