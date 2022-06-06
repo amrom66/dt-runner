@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -97,6 +98,10 @@ var serverCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(serverCmd)
-	serverCmd.PersistentFlags().StringVar(&kubeconfig, "kubeconfig", "", "kubeconfig file(default is $HOME/.kube/config)")
+	home, err := os.UserHomeDir()
+	if err != nil {
+		log.Panicln(err)
+	}
+	serverCmd.PersistentFlags().StringVar(&kubeconfig, "kubeconfig", home+"/.kube/config", "kubeconfig file(default is $HOME/.kube/config)")
 	serverCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
