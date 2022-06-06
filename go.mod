@@ -1,6 +1,6 @@
 module dt-runner
 
-go 1.18
+go 1.17
 
 require (
 	github.com/go-playground/webhooks/v6 v6.0.1
@@ -22,10 +22,12 @@ require (
 	github.com/imdario/mergo v0.3.5 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
+	github.com/mdempsky/gocode v0.0.0-20200405233807-4acdcbdea79d // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/time v0.0.0-20220210224613-90d013bbcef8 // indirect
+	golang.org/x/tools v0.1.5 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	k8s.io/api v0.24.1 // indirect
