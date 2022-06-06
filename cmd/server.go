@@ -5,6 +5,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,6 +15,10 @@ import (
 	"github.com/go-playground/webhooks/v6/gitlab"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 var kubeconfig string
@@ -50,6 +55,42 @@ var serverCmd = &cobra.Command{
 		})
 		port := strings.Join([]string{":", strconv.Itoa(viper.GetInt("server.port"))}, "")
 		fmt.Printf("dt-runner is running on port:%s, with token:%s\n", port, secret)
+
+		// init kubernetes client
+		var config *rest.Config
+		var err error
+		if kubeconfig == "" {
+			log.Printf("using in-cluster configuration")
+			config, err = rest.InClusterConfig()
+		} else {
+			log.Printf("using configuration from '%s'", kubeconfig)
+			config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+		}
+		if err != nil {
+			panic(err)
+		}
+		// api.AddToScheme(scheme.Scheme)
+		// crdConfig := *config
+		// crdConfig.ContentConfig.GroupVersion = &schema.GroupVersion{Group: api.GroupName, Version: api.GroupVersion}
+		// crdConfig.APIPath = "/apis"
+		// crdConfig.NegotiatedSerializer = serializer.NewCodecFactory(scheme.Scheme)
+		// crdConfig.UserAgent = rest.DefaultKubernetesUserAgent()
+
+		// myClient, err := rest.UnversionedRESTClientFor(&crdConfig)
+		// if err != nil {
+		// 	panic(err)
+		// }
+		myClient, err := kubernetes.NewForConfig(config)
+		if err != nil {
+			panic(err.Error())
+		}
+		pods, err := myClient.CoreV1().Pods("test-ns").List(context.TODO(), metav1.ListOptions{})
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Printf("There are %d pods in the cluster\n", len(pods.Items))
+
 		http.ListenAndServe(port, nil)
 	},
 }
@@ -57,6 +98,5 @@ var serverCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(serverCmd)
 	serverCmd.PersistentFlags().StringVar(&kubeconfig, "kubeconfig", "", "kubeconfig file(default is $HOME/.kube/config)")
-
 	serverCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
