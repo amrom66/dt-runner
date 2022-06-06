@@ -6,7 +6,8 @@ type Ci struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec CiSpec `json:"spec"`
+	Spec   CiSpec   `json:"spec"`
+	Status CiStatus `json:"status,omitempty"`
 }
 
 type CiList struct {
@@ -16,17 +17,18 @@ type CiList struct {
 }
 
 type CiSpec struct {
-	Model  string `json:"model"`
-	Repo   string `json:"repo"`
-	Branch string `json:"branch"`
-	On     On     `json:"on"`
+	Model     string            `json:"model,omitempty"`
+	Repo      string            `json:"repo,omitempty"`
+	Branch    string            `json:"branch,omitempty"`
+	On        On                `json:"on,omitempty"`
+	Variables map[string]string `json:"variables,omitempty"`
+}
+
+type CiStatus struct {
+	Histroy []string `json:"history,omitempty"`
 }
 
 type On struct {
-	Schedule string  `json:"schedule"`
-	Events   []Event `json:"events"`
-}
-type Event struct {
-	Push   string `json:"push"`
-	Commit string `json:"commit"`
+	Schedule string   `json:"schedule"`
+	Events   []string `json:"events"`
 }

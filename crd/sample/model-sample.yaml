@@ -1,0 +1,30 @@
+apiVersion: apps.dtwave.com/v1
+kind: Model
+metadata:
+  name: model-sample
+spec:
+  jobs:
+  - name: build-api
+    prepare:
+      image: busybox:latest
+      script: ""
+    check:
+      image: busybox:latest
+      script: ""
+    build:
+      image: maven:8
+      script: "mvn clean install"
+  - name: build-parent
+    prepare:
+      image: busybox:latest
+      script: ""
+    check:
+      image: busybox:latest
+      script: ""
+    build:
+      image: maven:8
+      script: "mvn clean install"
+  archive:
+    uri: "http://minio.dtwave-inc.com"
+    key: ""
+    secrect: ""

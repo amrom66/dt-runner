@@ -1,0 +1,16 @@
+apiVersion: apps.dtwave.com/v1
+kind: Ci
+metadata:
+  name: ci-sample
+spec:
+  model: "model-sample"
+  repo: "http://gitlab.dtwave-inc.com/shuqi-devops/dt-runner"
+  branch: "main"
+  on:
+    schedule: '28 23 1/7 * *'
+    events:
+    - push
+    - commit
+  variables:
+    PROJECT_NAME: dt-runner
+    SHUXI_VESION: 0.0.1

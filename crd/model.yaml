@@ -21,6 +21,8 @@ spec:
             type: object
             properties:
               jobs:
-                type: object
+                type: array
+                items:
+                  type: object
               archive:
                 type: object
