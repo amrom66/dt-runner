@@ -1,0 +1,59 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  creationTimestamp: null
+  name: model-job-sample
+spec:
+  template:
+    metadata:
+      creationTimestamp: null
+    spec:
+      volumes:
+      - name: data
+        emptyDir: {}
+      initContainers:
+      - image: "alpine/git"
+        name: prepare
+        env:
+        - name: repo
+          value: "https://github.com/linjinbao666/vrmanager.git"
+        - name: http_proxy
+          value: "http://192.168.90.110:1087"
+        - name: https_proxy
+          value: "http://192.168.90.110:1087"
+        args:
+        - clone
+        - --single-branch
+        - --branch=main
+        - --
+        - "https://github.com/linjinbao666/vrmanager.git"
+        - "/opt/workspace"
+        volumeMounts:
+        - name: data
+          mountPath: "/opt/workspace"
+      containers:
+      - image: "maven"
+        name: build
+        workingDir: "/opt/workspace"
+        env:
+        - name: repo
+          value: "https://github.com/linjinbao666/vrmanager.git"
+        - name: http_proxy
+          value: "http://192.168.90.110:1087"
+        - name: https_proxy
+          value: "http://192.168.90.110:1087"
+        - name: PROXY_HOST
+          value: "192.168.90.110"
+        - name: PROXY_PORT
+          value: "1087"
+        - name: MAVEN_OPTS
+          value: "-DproxySet=true -DproxyHost=192.168.90.110 -DproxyPort=1087"
+        args:
+        - "mvn"
+        - "clean"
+        - "package"
+        volumeMounts:
+        - name: data
+          mountPath: "/opt/workspace"
+      restartPolicy: Never
+status: {}
