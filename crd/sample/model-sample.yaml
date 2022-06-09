@@ -3,28 +3,18 @@ kind: Model
 metadata:
   name: model-sample
 spec:
-  jobs:
-  - name: build-api
-    prepare:
-      image: busybox:latest
-      script: ""
-    check:
-      image: busybox:latest
-      script: ""
-    build:
-      image: maven:8
-      script: "mvn clean install"
-  - name: build-parent
-    prepare:
-      image: busybox:latest
-      script: ""
-    check:
-      image: busybox:latest
-      script: ""
-    build:
-      image: maven:8
-      script: "mvn clean install"
-  archive:
-    uri: "http://minio.dtwave-inc.com"
-    key: ""
-    secrect: ""
+  tasks:
+  - name: prepare
+    image: busybox:latest
+    command: ""
+    args: []
+  - name: check
+    image: busybox:latest
+    command: ""
+    args: []
+  - name: archive
+    image: "http://minio.dtwave-inc.com"
+    command: ""
+    args: []
+  variables:
+    myenv: hello

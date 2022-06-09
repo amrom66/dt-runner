@@ -20,9 +20,9 @@ spec:
           spec:
             type: object
             properties:
-              jobs:
+              tasks:
                 type: array
                 items:
                   type: object
-              archive:
+              variables:
                 type: object

@@ -16,6 +16,7 @@ type CiList struct {
 	Items           []Ci `json:"items"`
 }
 
+// Model should be replaced with ModelTemplate
 type CiSpec struct {
 	Model     string            `json:"model,omitempty"`
 	Repo      string            `json:"repo,omitempty"`

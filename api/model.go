@@ -6,12 +6,19 @@ type Model struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec ModelSpec `json:"spec"`
+	Spec   ModelSpec   `json:"spec"`
+	Status ModelStatus `json:"status,omitempty"`
 }
 
 type ModelSpec struct {
-	Jobs    []Job   `json:"jobs"`
-	Archive Archive `json:"archive"`
+	Tasks     []Task            `json:"tasks,omitempty"`
+	Variables map[string]string `json:"variables,omitempty"`
+}
+
+type ModelStatus struct {
+	StartTime  string
+	Completime string
+	Succeeded  bool
 }
 
 type ModelList struct {
@@ -21,20 +28,9 @@ type ModelList struct {
 	Items []Model `json:"items"`
 }
 
-type Job struct {
-	Name    string `json:"name,omitempty"`
-	Prepare Step   `json:"prepare,omitempty"`
-	Check   Step   `json:"check,omitempty"`
-	Build   Step   `json:"build,omitempty"`
-}
-
-type Step struct {
-	Image  string `json:"image,omitempty"`
-	Script string `json:"script,omitempty"`
-}
-
-type Archive struct {
-	Uri    string `json:"uri,omitempty"`
-	Key    string `json:"key,omitempty"`
-	Secret string `json:"secret,omitempty"`
+type Task struct {
+	Name    string   `json:"name,omitempty"`
+	Image   string   `json:"image,omitempty"`
+	Command string   `json:"command,omitempty"`
+	Args    []string `json:"args,omitempty"`
 }

@@ -8,8 +8,8 @@ func (in *Model) DeepCopyInto(out *Model) {
 	out.TypeMeta = in.TypeMeta
 	out.ObjectMeta = in.ObjectMeta
 	out.Spec = ModelSpec{
-		Jobs:    in.Spec.Jobs,
-		Archive: in.Spec.Archive,
+		Tasks:     in.Spec.Tasks,
+		Variables: in.Spec.Variables,
 	}
 }
 

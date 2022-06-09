@@ -13,6 +13,9 @@ import (
 	"strconv"
 	"strings"
 
+	"dt-runner/api"
+	"dt-runner/pkg"
+
 	"github.com/go-playground/webhooks/v6/gitlab"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -85,12 +88,64 @@ var serverCmd = &cobra.Command{
 		if err != nil {
 			panic(err.Error())
 		}
-		pods, err := myClient.CoreV1().Pods("test-ns").List(context.TODO(), metav1.ListOptions{})
-		if err != nil {
-			panic(err)
+		// pods, err := myClient.CoreV1().Pods("test-ns").List(context.TODO(), metav1.ListOptions{})
+		// if err != nil {
+		// 	panic(err)
+		// }
+
+		ci := api.Ci{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-job",
+				Namespace: "default",
+			},
+			Spec: api.CiSpec{
+				Repo:   "https://github.com/linjinbao666/vrmanager.git",
+				Model:  "model-sample",
+				Branch: "main",
+			},
+		}
+		model := api.Model{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "model-sample",
+				Namespace: "default",
+			},
+			Spec: api.ModelSpec{
+				Tasks: []api.Task{
+					{
+						Name:  "build",
+						Image: "maven:latest",
+						Args:  []string{"mvn", "clean", "package"},
+					},
+				},
+				Variables: map[string]string{
+					"MAVEN_OPTS": "-DproxySet=true -DproxyHost=192.168.90.110 -DproxyPort=1087",
+				},
+			},
 		}
 
-		fmt.Printf("There are %d pods in the cluster\n", len(pods.Items))
+		jobs, err := myClient.BatchV1().Jobs("default").List(context.TODO(), metav1.ListOptions{})
+		if err != nil {
+			log.Panicln(err)
+		}
+		for _, job := range jobs.Items {
+			if job.Name == strings.Join([]string{ci.Name, model.Name}, "-") {
+				fmt.Println("job found")
+				deletePolicy := metav1.DeletePropagationForeground
+				err := myClient.BatchV1().Jobs("default").Delete(context.TODO(), job.Name, metav1.DeleteOptions{
+					PropagationPolicy: &deletePolicy,
+				})
+				if err != nil {
+					log.Panicln(err)
+				}
+				fmt.Println("job deleted")
+			}
+		}
+
+		job, err := pkg.GenerateJob(myClient, ci, model)
+		if err != nil {
+			log.Panicln(err)
+		}
+		fmt.Printf("job started %s\n", job.Name)
 
 		http.ListenAndServe(port, nil)
 	},
