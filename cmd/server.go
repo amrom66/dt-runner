@@ -73,57 +73,58 @@ var serverCmd = &cobra.Command{
 		if err != nil {
 			panic(err)
 		}
-		// api.AddToScheme(scheme.Scheme)
-		// crdConfig := *config
-		// crdConfig.ContentConfig.GroupVersion = &schema.GroupVersion{Group: api.GroupName, Version: api.GroupVersion}
-		// crdConfig.APIPath = "/apis"
-		// crdConfig.NegotiatedSerializer = serializer.NewCodecFactory(scheme.Scheme)
-		// crdConfig.UserAgent = rest.DefaultKubernetesUserAgent()
-
-		// myClient, err := rest.UnversionedRESTClientFor(&crdConfig)
-		// if err != nil {
-		// 	panic(err)
-		// }
 		myClient, err := kubernetes.NewForConfig(config)
 		if err != nil {
 			panic(err.Error())
 		}
-		// pods, err := myClient.CoreV1().Pods("test-ns").List(context.TODO(), metav1.ListOptions{})
-		// if err != nil {
-		// 	panic(err)
-		// }
 
 		ci := api.Ci{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-job",
-				Namespace: "default",
+				Namespace: pkg.DefaultNamespace,
 			},
 			Spec: api.CiSpec{
 				Repo:   "https://github.com/linjinbao666/vrmanager.git",
 				Model:  "model-sample",
 				Branch: "main",
+				Variables: map[string]string{
+					"http_proxy":  "http://192.168.90.110:1087",
+					"https_proxy": "http://192.168.90.110:1087",
+					"no_proxy":    "localhost",
+					"MAVEN_OPTS":  "-DproxySet=true -DproxyHost=192.168.90.110 -DproxyPort=1087",
+				},
 			},
 		}
 		model := api.Model{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "model-sample",
-				Namespace: "default",
+				Namespace: pkg.DefaultNamespace,
 			},
 			Spec: api.ModelSpec{
 				Tasks: []api.Task{
 					{
-						Name:  "build",
-						Image: "maven:latest",
-						Args:  []string{"mvn", "clean", "package"},
+						Name:    "build",
+						Image:   "docker.io/linjinbao66/dt-maven:0.0.4",
+						Command: []string{"/bin/sh", "-c"},
+						Args:    []string{"mvn clean package && echo 'success' > /dtswap/build.log"},
 					},
-				},
-				Variables: map[string]string{
-					"MAVEN_OPTS": "-DproxySet=true -DproxyHost=192.168.90.110 -DproxyPort=1087",
+					{
+						Name:    "archive",
+						Image:   "docker.io/linjinbao66/dt-mc:0.0.1",
+						Command: []string{"/bin/sh", "-c"},
+						Args:    []string{"while true; do sleep 30 && [ -f '/dtswap/build.log' ] && echo 'success' > /dtswap/archive.log && exit 0 || echo 'file not exists'; done"},
+					},
+					{
+						Name:    "clean",
+						Image:   "docker.io/busybox:latest",
+						Command: []string{"/bin/sh", "-c"},
+						Args:    []string{"while true; do sleep 30 && [ -f '/dtswap/archive.log' ] && exit 0 || echo 'file not exists'; done"},
+					},
 				},
 			},
 		}
 
-		jobs, err := myClient.BatchV1().Jobs("default").List(context.TODO(), metav1.ListOptions{})
+		jobs, err := myClient.BatchV1().Jobs(pkg.DefaultNamespace).List(context.TODO(), metav1.ListOptions{})
 		if err != nil {
 			log.Panicln(err)
 		}
@@ -131,7 +132,7 @@ var serverCmd = &cobra.Command{
 			if job.Name == strings.Join([]string{ci.Name, model.Name}, "-") {
 				fmt.Println("job found")
 				deletePolicy := metav1.DeletePropagationForeground
-				err := myClient.BatchV1().Jobs("default").Delete(context.TODO(), job.Name, metav1.DeleteOptions{
+				err := myClient.BatchV1().Jobs(pkg.DefaultNamespace).Delete(context.TODO(), job.Name, metav1.DeleteOptions{
 					PropagationPolicy: &deletePolicy,
 				})
 				if err != nil {

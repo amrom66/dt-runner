@@ -26,6 +26,16 @@ func GenerateJob(client *kubernetes.Clientset, ci api.Ci, model api.Model) (batc
 	if !check(ci, model) {
 		return batchv1.Job{}, fmt.Errorf("ci and model are not matched")
 	}
+	// fix env variables by add ci variables to model variables
+	variables := make(map[string]string)
+	for k, v := range ci.Spec.Variables {
+		variables[k] = v
+	}
+	for k, v := range model.Spec.Variables {
+		variables[k] = v
+	}
+	model.Spec.Variables = variables
+
 	job := batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      strings.Join([]string{name, model.Name}, "-"), // job name is combined by ci.name and model.name),
@@ -41,9 +51,15 @@ func GenerateJob(client *kubernetes.Clientset, ci api.Ci, model api.Model) (batc
 								EmptyDir: &corev1.EmptyDirVolumeSource{},
 							},
 						},
+						{
+							Name: DefaultSwapVolumeName,
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{},
+							},
+						},
 					},
-					InitContainers: initContainer(ci),
-					Containers:     container(model),
+					InitContainers: initContainers(ci.Spec.Repo, model),
+					Containers:     containers(model),
 					RestartPolicy:  corev1.RestartPolicyNever,
 				},
 			},
@@ -78,7 +94,7 @@ func check(ci api.Ci, model api.Model) bool {
 }
 
 // container is used to generate container
-func container(model api.Model) []corev1.Container {
+func containers(model api.Model) []corev1.Container {
 	containers := []corev1.Container{}
 
 	envVars := []corev1.EnvVar{}
@@ -93,10 +109,15 @@ func container(model api.Model) []corev1.Container {
 			WorkingDir: DefaultContainerWorkspace,
 			Env:        envVars,
 			Args:       task.Args,
+			Command:    task.Command,
 			VolumeMounts: []corev1.VolumeMount{
 				{
 					Name:      DefaultVolumeName,
 					MountPath: DefaultContainerWorkspace,
+				},
+				{
+					Name:      DefaultSwapVolumeName,
+					MountPath: DefaultSwapWorkspace,
 				},
 			},
 		})
@@ -106,17 +127,10 @@ func container(model api.Model) []corev1.Container {
 }
 
 // initContainer is used to generate init container
-func initContainer(ci api.Ci) []corev1.Container {
-	namespace := ci.Namespace
-	name := ci.Name
-	repo := ci.Spec.Repo
-	fmt.Println("initContainer, namespace:", namespace, "name:", name, "repo:", repo)
+func initContainers(repo string, model api.Model) []corev1.Container {
 
-	envs := make(map[string]string)
-	envs["http_proxy"] = "http://192.168.90.110:1087"
-	envs["https_proxy"] = "http://192.168.90.110:1087"
 	envVars := []corev1.EnvVar{}
-	for k, v := range envs {
+	for k, v := range model.Spec.Variables {
 		envVars = append(envVars, corev1.EnvVar{Name: k, Value: v})
 	}
 	args := []string{
@@ -125,7 +139,7 @@ func initContainer(ci api.Ci) []corev1.Container {
 		"--branch=main",
 		"--",
 		repo,
-		"/opt/workspace",
+		DefaultInitContainerWorkspace,
 	}
 	initContainer := []corev1.Container{
 		{

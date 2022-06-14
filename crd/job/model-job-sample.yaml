@@ -11,6 +11,8 @@ spec:
       volumes:
       - name: data
         emptyDir: {}
+      - name: dtswap
+        emptyDir: {}
       initContainers:
       - image: "alpine/git"
         name: prepare
@@ -32,7 +34,7 @@ spec:
         - name: data
           mountPath: "/opt/workspace"
       containers:
-      - image: "maven"
+      - image: "docker.io/linjinbao66/dt-maven:0.0.4"
         name: build
         workingDir: "/opt/workspace"
         env:
@@ -48,12 +50,27 @@ spec:
           value: "1087"
         - name: MAVEN_OPTS
           value: "-DproxySet=true -DproxyHost=192.168.90.110 -DproxyPort=1087"
+        command:
+        - "/bin/sh"
+        - "-c"
         args:
-        - "mvn"
-        - "clean"
-        - "package"
+        - "mvn clean package && echo 'success' > /dtswap/mvn.log"
         volumeMounts:
         - name: data
           mountPath: "/opt/workspace"
+        - name: dtswap
+          mountPath: "/dtswap"
+      - name: archive
+        image: "docker.io/linjinbao66/dt-mc:0.0.1"
+        command:
+        - "/bin/sh"
+        - "-c"
+        args:
+        - "while true; do sleep 30 && [ -f '/dtswap/mvn.log' ] && exit 0 || echo 'file not exists'; done"
+        volumeMounts:
+        - name: data
+          mountPath: "/opt/workspace"
+        - name: dtswap
+          mountPath: "/dtswap"
       restartPolicy: Never
 status: {}

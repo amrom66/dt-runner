@@ -31,6 +31,6 @@ type ModelList struct {
 type Task struct {
 	Name    string   `json:"name,omitempty"`
 	Image   string   `json:"image,omitempty"`
-	Command string   `json:"command,omitempty"`
+	Command []string `json:"command,omitempty"`
 	Args    []string `json:"args,omitempty"`
 }

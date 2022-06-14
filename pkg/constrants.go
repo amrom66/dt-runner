@@ -7,4 +7,6 @@ const (
 	DefaultInitContainerName      = "init"
 	DefaultInitContainerWorkspace = "/opt/workspace"
 	DefaultContainerWorkspace     = "/opt/workspace"
+	DefaultSwapWorkspace          = "/dtswap"
+	DefaultSwapVolumeName         = "dtswap"
 )
