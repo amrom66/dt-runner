@@ -6,15 +6,15 @@ spec:
   tasks:
   - name: prepare
     image: busybox:latest
-    command: ""
+    command: []
     args: []
   - name: check
     image: busybox:latest
-    command: ""
+    command: []
     args: []
   - name: archive
     image: "http://minio.dtwave-inc.com"
-    command: ""
+    command: []
     args: []
   variables:
     myenv: hello
