@@ -23,9 +23,9 @@ func Watch(kubeconfig string) {
 	if err != nil {
 		panic(err)
 	}
-	crdClient, err := kubernetes.NewForConfig(config)
+	_, err = kubernetes.NewForConfig(config)
 	if err != nil {
 		panic(err.Error())
 	}
-	crdClient.CCo
+
 }
