@@ -20,6 +20,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
 		&Model{},
 		&ModelList{},
+		&Ci{},
+		&CiList{},
 	)
 
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
