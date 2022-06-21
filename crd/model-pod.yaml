@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: model-pod
+  namespace: default
+spec:
+  containers:
+  - args:
+    - mvn clean package && echo 'success' > /dtswap/build.log
+    command:
+    - /bin/sh
+    - -c
+    env:
+    - name: repo
+      value: https://github.com/linjinbao666/vrmanager.git
+    - name: http_proxy
+      value: "http://192.168.90.110:1087"
+    - name: https_proxy
+      value: "http://192.168.90.110:1087"
+    - name: MAVEN_OPTS
+      value: "-DproxySet=true -DproxyHost=192.168.90.110 -DproxyPort=1087"
+    image: docker.io/linjinbao66/dt-maven:0.0.3
+    imagePullPolicy: IfNotPresent
+    name: build
+    volumeMounts:
+    - mountPath: /opt/workspace
+      name: data
+    - mountPath: /dtswap
+      name: dtswap
+    workingDir: /opt/workspace
+  - args:
+    - while true; do sleep 30 && [ -f '/dtswap/build.log' ] && echo 'success' > /dtswap/archive.log
+      && exit 0 || echo 'file not exists'; done
+    command:
+    - /bin/sh
+    - -c
+    image: docker.io/linjinbao66/dt-mc:0.0.1
+    imagePullPolicy: IfNotPresent
+    name: archive
+    volumeMounts:
+    - mountPath: /opt/workspace
+      name: data
+    - mountPath: /dtswap
+      name: dtswap
+  - args:
+    - while true; do sleep 30 && [ -f '/dtswap/archive.log' ] && exit 0 || echo 'file
+      not exists'; done
+    command:
+    - /bin/sh
+    - -c
+    image: busybox
+    env:
+    - name: http_proxy
+      value: "http://192.168.90.110:1087"
+    - name: https_proxy
+      value: "http://192.168.90.110:1087"
+    imagePullPolicy: Always
+    name: clean
+    volumeMounts:
+    - mountPath: /dtswap
+      name: dtswap
+  dnsPolicy: ClusterFirst 
+  initContainers:
+  - args:
+    - clone
+    - --single-branch
+    - --branch=main
+    - --
+    - https://github.com/linjinbao666/vrmanager.git
+    - /opt/workspace
+    env:
+    - name: repo
+      value: https://github.com/linjinbao666/vrmanager.git
+    - name: http_proxy
+      value: "http://192.168.90.110:1087"
+    - name: https_proxy
+      value: "http://192.168.90.110:1087"
+    image: alpine/git
+    imagePullPolicy: Always
+    name: prepare
+    volumeMounts:
+    - mountPath: /opt/workspace
+      name: data
+  restartPolicy: Never
+  volumes:
+  - emptyDir: {}
+    name: data
+  - emptyDir: {}
+    name: dtswap
