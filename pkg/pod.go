@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"dt-runner/api"
+	appsv1 "dt-runner/apis/apps/v1"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,8 +13,8 @@ import (
 
 // DtJob 是对ci和model的封装
 type DtJob struct {
-	ci    api.Ci
-	model api.Model
+	ci    appsv1.Ci
+	model appsv1.Model
 }
 
 // GeneratePod is used to generate a pod with given arguments
@@ -72,7 +72,7 @@ func GeneratePod(dtJob DtJob) (corev1.Pod, error) {
 
 // check is used to check ci and model are matched
 // TODO check name and namespace are matched with kubernetes rules
-func check(ci api.Ci, model api.Model) bool {
+func check(ci appsv1.Ci, model appsv1.Model) bool {
 	if ci.Spec.Model != model.Name {
 		return false
 	}
@@ -93,7 +93,7 @@ func check(ci api.Ci, model api.Model) bool {
 }
 
 // container is used to generate container
-func containers(model api.Model) []corev1.Container {
+func containers(model appsv1.Model) []corev1.Container {
 	containers := []corev1.Container{}
 
 	envVars := []corev1.EnvVar{}
@@ -126,7 +126,7 @@ func containers(model api.Model) []corev1.Container {
 }
 
 // initContainer is used to generate init container
-func initContainer(repo string, model api.Model) []corev1.Container {
+func initContainer(repo string, model appsv1.Model) []corev1.Container {
 
 	envVars := []corev1.EnvVar{}
 	for k, v := range model.Spec.Variables {

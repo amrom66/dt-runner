@@ -1,19 +1,19 @@
 package cmd
 
 import (
-	"dt-runner/api"
+	apis "dt-runner/apis"
 	"dt-runner/pkg"
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var ci = api.Ci{
+var ci = apis.Ci{
 	ObjectMeta: metav1.ObjectMeta{
 		Name:      "test-job",
 		Namespace: pkg.DefaultNamespace,
 	},
-	Spec: api.CiSpec{
+	Spec: apis.CiSpec{
 		Repo:   "https://github.com/linjinbao666/vrmanager.git",
 		Model:  "model-sample",
 		Branch: "main",
@@ -25,13 +25,13 @@ var ci = api.Ci{
 		},
 	},
 }
-var model = api.Model{
+var model = apis.Model{
 	ObjectMeta: metav1.ObjectMeta{
 		Name:      "model-sample",
 		Namespace: pkg.DefaultNamespace,
 	},
-	Spec: api.ModelSpec{
-		Tasks: []api.Task{
+	Spec: apis.ModelSpec{
+		Tasks: []apis.Task{
 			{
 				Name:    "build",
 				Image:   "docker.io/linjinbao66/dt-maven:0.0.4",
