@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	appsv1 "dt-runner/apis/apps/v1"
+	appsv1 "dt-runner/api/apps/v1"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

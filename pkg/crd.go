@@ -1,14 +1,15 @@
 package pkg
 
 import (
-	"context"
 	"fmt"
 	"log"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	crdclient "dt-runner/generated/clientset/versioned"
+
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Watch is used to start kubernetes client and watch crd resources
@@ -26,16 +27,16 @@ func Watch(kubeconfig string) {
 	if err != nil {
 		panic(err)
 	}
-	podClient, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		panic(err.Error())
-	}
 
-	podList, err := podClient.CoreV1().Pods("kube-system").List(context.TODO(), v1.ListOptions{})
+	crdClient, err := crdclient.NewForConfig(config)
 	if err != nil {
 		log.Panicln(err)
 	}
-	for _, v := range podList.Items {
-		fmt.Println(v.Name)
+	cis, err := crdClient.AppsV1().Cis("default").List(metav1.ListOptions{})
+	if err != nil {
+		log.Panicln(err)
+	}
+	for ci := range cis.Items {
+		fmt.Println(ci)
 	}
 }
