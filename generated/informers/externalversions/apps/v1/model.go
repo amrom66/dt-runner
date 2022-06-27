@@ -19,6 +19,7 @@ limitations under the License.
 package v1
 
 import (
+	"context"
 	appsv1 "dt-runner/api/apps/v1"
 	versioned "dt-runner/generated/clientset/versioned"
 	internalinterfaces "dt-runner/generated/informers/externalversions/internalinterfaces"
@@ -61,13 +62,13 @@ func NewFilteredModelInformer(client versioned.Interface, namespace string, resy
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AppsV1().Models(namespace).List(options)
+				return client.AppsV1().Models(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.AppsV1().Models(namespace).Watch(options)
+				return client.AppsV1().Models(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&appsv1.Model{},

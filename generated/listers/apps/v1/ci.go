@@ -27,8 +27,10 @@ import (
 )
 
 // CiLister helps list Cis.
+// All objects returned here must be treated as read-only.
 type CiLister interface {
 	// List lists all Cis in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.Ci, err error)
 	// Cis returns an object that can list and get Cis.
 	Cis(namespace string) CiNamespaceLister
@@ -59,10 +61,13 @@ func (s *ciLister) Cis(namespace string) CiNamespaceLister {
 }
 
 // CiNamespaceLister helps list and get Cis.
+// All objects returned here must be treated as read-only.
 type CiNamespaceLister interface {
 	// List lists all Cis in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.Ci, err error)
 	// Get retrieves the Ci from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.Ci, error)
 	CiNamespaceListerExpansion
 }

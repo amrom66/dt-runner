@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -32,7 +33,7 @@ func Watch(kubeconfig string) {
 	if err != nil {
 		log.Panicln(err)
 	}
-	cis, err := crdClient.AppsV1().Cis("default").List(metav1.ListOptions{})
+	cis, err := crdClient.AppsV1().Cis("default").List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		log.Panicln(err)
 	}

@@ -19,6 +19,7 @@ limitations under the License.
 package fake
 
 import (
+	"context"
 	appsv1 "dt-runner/api/apps/v1"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,7 +41,7 @@ var cisResource = schema.GroupVersionResource{Group: "apps.dtwave.com", Version:
 var cisKind = schema.GroupVersionKind{Group: "apps.dtwave.com", Version: "v1", Kind: "Ci"}
 
 // Get takes name of the ci, and returns the corresponding ci object, and an error if there is any.
-func (c *FakeCis) Get(name string, options v1.GetOptions) (result *appsv1.Ci, err error) {
+func (c *FakeCis) Get(ctx context.Context, name string, options v1.GetOptions) (result *appsv1.Ci, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(cisResource, c.ns, name), &appsv1.Ci{})
 
@@ -51,7 +52,7 @@ func (c *FakeCis) Get(name string, options v1.GetOptions) (result *appsv1.Ci, er
 }
 
 // List takes label and field selectors, and returns the list of Cis that match those selectors.
-func (c *FakeCis) List(opts v1.ListOptions) (result *appsv1.CiList, err error) {
+func (c *FakeCis) List(ctx context.Context, opts v1.ListOptions) (result *appsv1.CiList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(cisResource, cisKind, c.ns, opts), &appsv1.CiList{})
 
@@ -73,14 +74,14 @@ func (c *FakeCis) List(opts v1.ListOptions) (result *appsv1.CiList, err error) {
 }
 
 // Watch returns a watch.Interface that watches the requested cis.
-func (c *FakeCis) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeCis) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(cisResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a ci and creates it.  Returns the server's representation of the ci, and an error, if there is any.
-func (c *FakeCis) Create(ci *appsv1.Ci) (result *appsv1.Ci, err error) {
+func (c *FakeCis) Create(ctx context.Context, ci *appsv1.Ci, opts v1.CreateOptions) (result *appsv1.Ci, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(cisResource, c.ns, ci), &appsv1.Ci{})
 
@@ -91,7 +92,7 @@ func (c *FakeCis) Create(ci *appsv1.Ci) (result *appsv1.Ci, err error) {
 }
 
 // Update takes the representation of a ci and updates it. Returns the server's representation of the ci, and an error, if there is any.
-func (c *FakeCis) Update(ci *appsv1.Ci) (result *appsv1.Ci, err error) {
+func (c *FakeCis) Update(ctx context.Context, ci *appsv1.Ci, opts v1.UpdateOptions) (result *appsv1.Ci, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(cisResource, c.ns, ci), &appsv1.Ci{})
 
@@ -103,7 +104,7 @@ func (c *FakeCis) Update(ci *appsv1.Ci) (result *appsv1.Ci, err error) {
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeCis) UpdateStatus(ci *appsv1.Ci) (*appsv1.Ci, error) {
+func (c *FakeCis) UpdateStatus(ctx context.Context, ci *appsv1.Ci, opts v1.UpdateOptions) (*appsv1.Ci, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateSubresourceAction(cisResource, "status", c.ns, ci), &appsv1.Ci{})
 
@@ -114,23 +115,23 @@ func (c *FakeCis) UpdateStatus(ci *appsv1.Ci) (*appsv1.Ci, error) {
 }
 
 // Delete takes name of the ci and deletes it. Returns an error if one occurs.
-func (c *FakeCis) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeCis) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(cisResource, c.ns, name), &appsv1.Ci{})
+		Invokes(testing.NewDeleteActionWithOptions(cisResource, c.ns, name, opts), &appsv1.Ci{})
 
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeCis) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(cisResource, c.ns, listOptions)
+func (c *FakeCis) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(cisResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &appsv1.CiList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched ci.
-func (c *FakeCis) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *appsv1.Ci, err error) {
+func (c *FakeCis) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *appsv1.Ci, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(cisResource, c.ns, name, pt, data, subresources...), &appsv1.Ci{})
 
