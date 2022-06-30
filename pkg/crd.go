@@ -48,6 +48,7 @@ type ciController struct {
 	workqueue              workqueue.RateLimitingInterface
 }
 
+//
 func newCiController(config *rest.Config) *ciController {
 	klog.Infoln("Creating ci controller.")
 	kubeClient := kubernetes.NewForConfigOrDie(config)
@@ -57,13 +58,19 @@ func newCiController(config *rest.Config) *ciController {
 	informer := informerFactory.Apps().V1().Cis()
 	informer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			klog.Infof("Added: %v", obj)
+			ci := obj.(*appsv1.Ci)
+			klog.Infof("Added: %v", ci.Name)
+			klog.Info("repo :%v", ci.Spec.Repo, " will be watched")
 		},
 		UpdateFunc: func(old, new interface{}) {
-			klog.Infof("Updates: %v", old)
+			ci := old.(*appsv1.Ci)
+			klog.Infof("Updates: %v", ci.Name)
+
 		},
 		DeleteFunc: func(obj interface{}) {
-			klog.Infof("Deleted: %v", obj)
+			ci := obj.(*appsv1.Ci)
+			klog.Infof("Deleted: %v", ci.Name)
+			klog.Info("repo :%v", ci.Spec.Repo, " will not be watched")
 		},
 	})
 	informerFactory.Start(wait.NeverStop)
@@ -94,13 +101,16 @@ func newModelController(config *rest.Config) *modelController {
 	informer := informerFactory.Apps().V1().Models()
 	informer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			klog.Infof("Added: %v", obj)
+			model := obj.(*appsv1.Model)
+			klog.Infof("Added: %v", model.Name)
 		},
 		UpdateFunc: func(old, new interface{}) {
-			klog.Infof("Updates: %v", old)
+			model := old.(*appsv1.Model)
+			klog.Infof("Updates: %v", model.Name)
 		},
 		DeleteFunc: func(obj interface{}) {
-			klog.Infof("Deleted: %v", obj)
+			model := obj.(*appsv1.Model)
+			klog.Infof("Deleted: %v", model.Name)
 		},
 	})
 	informerFactory.Start(wait.NeverStop)

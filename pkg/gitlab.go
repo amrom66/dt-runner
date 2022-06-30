@@ -20,17 +20,26 @@ func GitlabHook(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
+	dtjob, error := generateDtJob(payload)
+	if error != nil {
+		log.Println(error)
+	}
+	fmt.Println(dtjob)
+
+}
+
+// generateDtJob is used to generate dtjob struct
+func generateDtJob(payload interface{}) (DtJob, error) {
+	fmt.Println("generateDtJob")
+
 	switch payload.(type) {
 	case gitlab.PushEventPayload:
-		fmt.Println("push event playload")
 		push := payload.(gitlab.PushEventPayload)
-		fmt.Printf("%+v", push)
+
 	case gitlab.TagEventPayload:
-		fmt.Println("tag event playload")
 		tag := payload.(gitlab.TagEventPayload)
-		fmt.Printf("%+v", tag)
 	case gitlab.SystemHookPayload:
-		fmt.Println("system event playload")
+
 	default:
 		fmt.Println("unknown event playload")
 	}
