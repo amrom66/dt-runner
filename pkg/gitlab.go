@@ -3,7 +3,6 @@ package pkg
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/go-playground/webhooks/gitlab"
@@ -11,32 +10,31 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/klog/v2"
 )
 
 var jobCache = make(map[string]corev1.Pod)
 
 // GitlabHook is used to hook gitlab
 func GitlabHook(w http.ResponseWriter, r *http.Request) {
-
 	secret := viper.GetString("webhook.token")
 	hook, _ := gitlab.New(gitlab.Options.Secret(secret))
 	payload, err := hook.Parse(r, gitlab.PushEvents, gitlab.TagEvents, gitlab.SystemHookEvents)
-
 	if err != nil {
-		log.Println(err)
+		klog.Errorln("start gitlabhook error, %s", err)
 		return
 	}
 	dtJob, error := generateDtJob(payload)
 	if error != nil {
-		log.Println(error)
+		klog.Errorln("generateDtJob error, %s", err)
 	}
-	fmt.Printf("dtjob generate, %s", dtJob.name)
-
 	pod, err := GeneratePod(dtJob)
 	if err != nil {
-		fmt.Println(err)
+		klog.Errorln("GeneratePod error, %s", err)
 	}
-	jobCache[dtJob.name] = pod
+	if dtJob.name != "" && pod.Name != "" {
+		jobCache[dtJob.name] = pod
+	}
 }
 
 // startPod is used to start a pod if confirmed
@@ -45,22 +43,49 @@ func StartPod() {
 	// creates the clientset
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		panic(err.Error())
+		klog.Errorln("build clientset error, ", err)
+		return
 	}
+	klog.Info("begin checking ci and pods")
 	pods, err := clientset.CoreV1().Pods(DefaultNamespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		panic(err.Error())
+		klog.Errorln("list pods error, ", err)
+		return
 	}
-	fmt.Printf("There are %d pods in the cluster\n", len(pods.Items))
-	fmt.Println("jobCache", len(jobCache))
+
+	podsClient := clientset.CoreV1().Pods(DefaultNamespace)
+
+	items := make(map[string]corev1.Pod)
+	for _, v := range pods.Items {
+		items[v.Name] = v
+	}
 	for k, v := range jobCache {
-		fmt.Printf(k, v.Name)
+		klog.InfoS("check job %s", k)
+		if _, ok := items[v.Name]; ok {
+			klog.InfoS("pod existes, %s", v.Name)
+			continue
+		}
+		result, err := podsClient.Create(context.TODO(), &v, metav1.CreateOptions{})
+		if err != nil {
+			klog.Error("pod create error, %s", err.Error())
+			continue
+		}
+		jobCache[k] = *result
 	}
+	klog.Info("end checking ci and pods")
+}
+
+// cleanPod is used to clean pod on cron
+//todo
+func cleanPod() {
+
 }
 
 // generateDtJob is used to generate DtJob
 func generateDtJob(payload interface{}) (dtJob DtJob, err error) {
-	dtJob.name = RandomString(6)
+	var name = RandomString(6)
+	klog.Info("generateDtJob", name)
+	dtJob.name = name
 	switch payload.(type) {
 	case gitlab.PushEventPayload:
 		push := payload.(gitlab.PushEventPayload)

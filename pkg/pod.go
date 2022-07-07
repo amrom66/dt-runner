@@ -29,11 +29,9 @@ func GeneratePod(dtJob DtJob) (corev1.Pod, error) {
 
 	ci := GetCi(DefaultNamespace, dtJob.repo)
 	model := GetModel(DefaultNamespace, ci.Spec.Model)
-
+	var prefix = dtJob.name
 	namespace := ci.Namespace
 	name := ci.Name
-	repo := ci.Spec.Repo
-	fmt.Println("initContainer, namespace:", namespace, "name:", name, "repo:", repo)
 
 	if !check(*ci, *model) {
 		return corev1.Pod{}, fmt.Errorf("ci and model are not matched")
@@ -50,7 +48,7 @@ func GeneratePod(dtJob DtJob) (corev1.Pod, error) {
 
 	pod := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      strings.Join([]string{name, model.Name}, "-"), // pod name is combined by ci.name and model.name),
+			Name:      strings.Join([]string{prefix, name, model.Name}, "-"), // pod name is combined by dtjob.name ci.name and model.name),
 			Namespace: namespace,
 		},
 		Spec: corev1.PodSpec{

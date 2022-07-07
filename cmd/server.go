@@ -30,7 +30,7 @@ var serverCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		http.HandleFunc("/", pkg.GitlabHook)
-
+		// c is a schedule plan
 		c := cron.New()
 		c.AddFunc("* * * * *", pkg.StartPod)
 		c.Start()
