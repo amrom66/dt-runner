@@ -13,23 +13,29 @@ import (
 
 // DtJob 是对ci和model的封装
 type DtJob struct {
-	ci    appsv1.Ci
-	model appsv1.Model
+	name        string
+	repo        string
+	httpurl     string
+	sshurl      string
+	branch      string
+	ref         string
+	checkoutSHA string
 }
 
 // GeneratePod is used to generate a pod with given arguments
 // GeneratePod will not create pod using kubernetes client, it just generate the pod spec
 // Pod name is combined by ci.name and model.name
 func GeneratePod(dtJob DtJob) (corev1.Pod, error) {
-	ci := dtJob.ci
-	model := dtJob.model
+
+	ci := GetCi(DefaultNamespace, dtJob.repo)
+	model := GetModel(DefaultNamespace, ci.Spec.Model)
 
 	namespace := ci.Namespace
 	name := ci.Name
 	repo := ci.Spec.Repo
 	fmt.Println("initContainer, namespace:", namespace, "name:", name, "repo:", repo)
 
-	if !check(ci, model) {
+	if !check(*ci, *model) {
 		return corev1.Pod{}, fmt.Errorf("ci and model are not matched")
 	}
 	// fix env variables by add ci variables to model variables
@@ -62,8 +68,8 @@ func GeneratePod(dtJob DtJob) (corev1.Pod, error) {
 					},
 				},
 			},
-			InitContainers: initContainer(ci.Spec.Repo, model),
-			Containers:     containers(model),
+			InitContainers: initContainer(ci.Spec.Repo, *model),
+			Containers:     containers(*model),
 			RestartPolicy:  corev1.RestartPolicyNever,
 		},
 	}

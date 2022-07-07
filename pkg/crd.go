@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"context"
+	"fmt"
 	"log"
 
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -26,7 +28,11 @@ import (
 	informers "dt-runner/generated/informers/externalversions"
 
 	crdscheme "dt-runner/generated/clientset/versioned/scheme"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+var config *rest.Config
 
 type modelController struct {
 	kubeclientset          kubernetes.Interface
@@ -48,7 +54,7 @@ type ciController struct {
 	workqueue              workqueue.RateLimitingInterface
 }
 
-//
+// newCiController creates a new ciController
 func newCiController(config *rest.Config) *ciController {
 	klog.Infoln("Creating ci controller.")
 	kubeClient := kubernetes.NewForConfigOrDie(config)
@@ -155,7 +161,6 @@ func (modelController *modelController) run() {
 // Watch is used to start kubernetes client and watch crd resources
 func Watch(kubeconfig string) {
 	// init kubernetes client
-	var config *rest.Config
 	var err error
 	if kubeconfig == "" {
 		log.Printf("using in-cluster configuration")
@@ -167,6 +172,7 @@ func Watch(kubeconfig string) {
 	if err != nil {
 		panic(err)
 	}
+
 	ciController := newCiController(config)
 	modelController := newModelController(config)
 
@@ -175,4 +181,44 @@ func Watch(kubeconfig string) {
 
 	klog.Infoln("Starting custom controller.")
 
+}
+
+func ListModels(namespace string) *appsv1.ModelList {
+	modelclient := crdclientset.NewForConfigOrDie(config)
+	modelList, err := modelclient.AppsV1().Models(namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		fmt.Println("list model error", err)
+		return &appsv1.ModelList{}
+	}
+	return modelList
+}
+
+func ListCis(namespace string) *appsv1.CiList {
+	ciclient := crdclientset.NewForConfigOrDie(config)
+	cilist, err := ciclient.AppsV1().Cis(namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		fmt.Println("list cis error", err)
+		return &appsv1.CiList{}
+	}
+	return cilist
+}
+
+func GetCi(namespace string, name string) *appsv1.Ci {
+	ciclient := crdclientset.NewForConfigOrDie(config)
+	ci, err := ciclient.AppsV1().Cis(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	if err != nil {
+		fmt.Println("get ci error", err)
+		return &appsv1.Ci{}
+	}
+	return ci
+}
+
+func GetModel(namespace string, name string) *appsv1.Model {
+	modelClient := crdclientset.NewForConfigOrDie(config)
+	model, err := modelClient.AppsV1().Models(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	if err != nil {
+		fmt.Println("get model err", model)
+		return &appsv1.Model{}
+	}
+	return model
 }

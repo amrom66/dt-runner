@@ -31,8 +31,8 @@ type Model struct {
 }
 
 // ModelSpec is the spec of a Model.
-type ModelSpec struct{
-	Tasks     []Task  `json:"tasks,omitempty"`
+type ModelSpec struct {
+	Tasks []Task `json:"tasks,omitempty"`
 
 	// +listType=map
 	// +optional
@@ -61,4 +61,3 @@ type Task struct {
 	Command []string `json:"command,omitempty"`
 	Args    []string `json:"args,omitempty"`
 }
-

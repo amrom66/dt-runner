@@ -16,6 +16,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/robfig/cron/v3"
 )
 
 var kubeconfig string
@@ -29,6 +31,9 @@ var serverCmd = &cobra.Command{
 
 		http.HandleFunc("/", pkg.GitlabHook)
 
+		c := cron.New()
+		c.AddFunc("* * * * *", pkg.StartPod)
+		c.Start()
 		go pkg.Watch(kubeconfig)
 
 		port := strings.Join([]string{":", strconv.Itoa(viper.GetInt("server.port"))}, "")
