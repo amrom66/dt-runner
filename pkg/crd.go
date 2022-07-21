@@ -66,12 +66,11 @@ func newCiController(config *rest.Config) *ciController {
 		AddFunc: func(obj interface{}) {
 			ci := obj.(*appsv1.Ci)
 			klog.Infof("Added: %v", ci.Name)
-			klog.Info("repo :%v", ci.Spec.Repo, " will be watched")
+			klog.Info("repo: ", ci.Spec.Repo, " will be watched")
 		},
 		UpdateFunc: func(old, new interface{}) {
 			ci := old.(*appsv1.Ci)
 			klog.Infof("Updates: %v", ci.Name)
-
 		},
 		DeleteFunc: func(obj interface{}) {
 			ci := obj.(*appsv1.Ci)

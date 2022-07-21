@@ -26,7 +26,7 @@ spec:
                 type: string
               branch:
                 type: string
-              on:
+              term:
                 type: object
               variables:
                 type: object

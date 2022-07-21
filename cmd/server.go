@@ -48,6 +48,7 @@ func init() {
 	if err != nil {
 		log.Panicln(err)
 	}
-	serverCmd.PersistentFlags().StringVar(&kubeconfig, "kubeconfig", home+"/.kube/config", "kubeconfig file(default is $HOME/.kube/config)")
+	serverCmd.PersistentFlags().StringVar(&kubeconfig, "kubeconfig", home+"/.kube/config",
+		"kubeconfig file(default is $HOME/.kube/config)")
 	serverCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

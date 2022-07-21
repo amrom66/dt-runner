@@ -7,17 +7,6 @@ import (
 // Ci is the type of a ci.
 type CiType string
 
-const (
-	// CiTypeUnknown is a super ci unknown.
-	CiTypeUnknown = CiType("unknown")
-	// CiTypeSuperCi is a super ci e.g Batman, Spiderman...
-	CiTypeSuperCi = CiType("superci")
-	// CiTypeAntiCi is a anti ci e.g Punisher, Deadpool...
-	CiTypeAntiCi = CiType("antici")
-	// CiTypeVillain is a Villain e.g Fisk, Joker...
-	CiTypeVillain = CiType("villain")
-)
-
 // Ci represents a apps ci.
 //
 // +genclient
@@ -31,11 +20,11 @@ type Ci struct {
 }
 
 // CiSpec is the spec of a Ci.
-type CiSpec struct{
-	Model     string            `json:"model,omitempty"`
-	Repo      string            `json:"repo,omitempty"`
-	Branch    string            `json:"branch,omitempty"`
-	On        On                `json:"on,omitempty"`
+type CiSpec struct {
+	Model  string `json:"model,omitempty"`
+	Repo   string `json:"repo,omitempty"`
+	Branch string `json:"branch,omitempty"`
+	Term   Term   `json:"term,omitempty"`
 
 	// +listType=map
 	// +optional
@@ -56,7 +45,7 @@ type CiList struct {
 	Items []Ci `json:"items"`
 }
 
-type On struct {
+type Term struct {
 	Schedule string   `json:"schedule"`
 	Events   []string `json:"events"`
 }

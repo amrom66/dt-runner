@@ -9,12 +9,13 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog/v2"
 )
 
 // DtJob 是对ci和model的封装
 type DtJob struct {
 	name        string
-	repo        string
+	ci          string
 	httpurl     string
 	sshurl      string
 	branch      string
@@ -27,11 +28,8 @@ type DtJob struct {
 // Pod name is combined by ci.name and model.name
 func GeneratePod(dtJob DtJob) (corev1.Pod, error) {
 
-	ci := GetCi(DefaultNamespace, dtJob.repo)
+	ci := GetCi(DefaultNamespace, dtJob.ci)
 	model := GetModel(DefaultNamespace, ci.Spec.Model)
-	var prefix = dtJob.name
-	namespace := ci.Namespace
-	name := ci.Name
 
 	if !check(*ci, *model) {
 		return corev1.Pod{}, fmt.Errorf("ci and model are not matched")
@@ -48,8 +46,8 @@ func GeneratePod(dtJob DtJob) (corev1.Pod, error) {
 
 	pod := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      strings.Join([]string{prefix, name, model.Name}, "-"), // pod name is combined by dtjob.name ci.name and model.name),
-			Namespace: namespace,
+			Name:      strings.Join([]string{dtJob.name, ci.Name, model.Name}, "-"), // pod name is combined by dtjob.name ci.name and model.name),
+			Namespace: ci.Namespace,
 		},
 		Spec: corev1.PodSpec{
 			Volumes: []corev1.Volume{
@@ -83,6 +81,7 @@ func check(ci appsv1.Ci, model appsv1.Model) bool {
 	if ci.Namespace != model.Namespace {
 		return false
 	}
+	klog.Info("repo name:", ci.Spec.Repo)
 	re := regexp.MustCompile("^http|https://github.com|gitlab.com|dtwave-inc.com/*")
 	result := re.FindAllStringSubmatch(ci.Spec.Repo, -1)
 	if result == nil {
@@ -106,6 +105,7 @@ func containers(model appsv1.Model) []corev1.Container {
 	}
 
 	for _, task := range model.Spec.Tasks {
+		klog.Info("container name", task.Name)
 		containers = append(containers, corev1.Container{
 			Name:       task.Name,
 			Image:      task.Image,

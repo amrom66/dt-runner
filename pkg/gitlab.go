@@ -2,8 +2,10 @@ package pkg
 
 import (
 	"context"
+	crdclientset "dt-runner/generated/clientset/versioned"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-playground/webhooks/gitlab"
 	"github.com/spf13/viper"
@@ -13,6 +15,7 @@ import (
 	"k8s.io/klog/v2"
 )
 
+// ci.name:pod
 var jobCache = make(map[string]corev1.Pod)
 
 // GitlabHook is used to hook gitlab
@@ -28,18 +31,42 @@ func GitlabHook(w http.ResponseWriter, r *http.Request) {
 	if error != nil {
 		klog.Errorln("generateDtJob error, %s", err)
 	}
+	klog.Info("dtjob name: ", dtJob.name)
 	pod, err := GeneratePod(dtJob)
 	if err != nil {
 		klog.Errorln("GeneratePod error, %s", err)
 	}
 	if dtJob.name != "" && pod.Name != "" {
-		jobCache[dtJob.name] = pod
+		jobCache[dtJob.ci] = pod
 	}
 }
 
 // startPod is used to start a pod if confirmed
-// startPod will keep check key:value in podCache
+// startPod will keep check key:value in jobCache
 func StartPod() {
+
+	ciclient := crdclientset.NewForConfigOrDie(config)
+	cilist, err := ciclient.AppsV1().Cis(DefaultNamespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		klog.Errorln("list cis error, ", err)
+		return
+	}
+	for _, ci := range cilist.Items {
+		klog.Info("ci name: ", ci.Name)
+		dtjob := DtJob{
+			name:   "init",
+			ci:     ci.Name,
+			branch: "main",
+		}
+		pod, err := GeneratePod(dtjob)
+		if err != nil {
+			klog.Errorln("GeneratePod error: ", err)
+			continue
+		}
+		klog.Info("Generate init pod: ", pod.Name)
+		jobCache[ci.Name] = pod
+	}
+
 	// creates the clientset
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
@@ -54,17 +81,20 @@ func StartPod() {
 	}
 
 	podsClient := clientset.CoreV1().Pods(DefaultNamespace)
-
-	items := make(map[string]corev1.Pod)
+	items := make(map[string]string)
 	for _, v := range pods.Items {
-		items[v.Name] = v
+		names := strings.Split(v.Name, "-")
+		if len(names) == 2 {
+			items[names[1]] = v.Name
+		}
 	}
 	for k, v := range jobCache {
-		klog.InfoS("check job %s", k)
-		if _, ok := items[v.Name]; ok {
+		klog.InfoS("check job: ", k)
+		if _, ok := items[k]; ok {
 			klog.InfoS("pod existes, %s", v.Name)
 			continue
 		}
+		klog.InfoS("pod info, %s", v)
 		result, err := podsClient.Create(context.TODO(), &v, metav1.CreateOptions{})
 		if err != nil {
 			klog.Error("pod create error, %s", err.Error())
@@ -73,12 +103,6 @@ func StartPod() {
 		jobCache[k] = *result
 	}
 	klog.Info("end checking ci and pods")
-}
-
-// cleanPod is used to clean pod on cron
-//todo
-func cleanPod() {
-
 }
 
 // generateDtJob is used to generate DtJob
@@ -105,5 +129,6 @@ func generateDtJob(payload interface{}) (dtJob DtJob, err error) {
 		fmt.Println("system hook")
 		return DtJob{}, nil
 	}
+	klog.Info("dtjob name: ", dtJob.name)
 	return dtJob, nil
 }

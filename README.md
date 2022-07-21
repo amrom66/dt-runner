@@ -4,6 +4,6 @@ dt-runner是一个集中式的CI触发平台。在传统的gitlab ci中，研发
 
 * 监听gitlab所有事件
 * 创建CRD
-* 运行k8s JOB
+* 运行k8s pod
 * 采集运行结果
 * 发送邮件
