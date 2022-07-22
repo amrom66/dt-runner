@@ -29,6 +29,11 @@ var serverCmd = &cobra.Command{
 	Long:  `dt-runner will listen on a web port, which will be triggered by gitlab webhook.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
+		http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("ok"))
+		})
+
 		http.HandleFunc("/", pkg.GitlabHook)
 		// c is a schedule plan
 		c := cron.New()
@@ -37,7 +42,8 @@ var serverCmd = &cobra.Command{
 		go pkg.Watch(kubeconfig)
 
 		port := strings.Join([]string{":", strconv.Itoa(viper.GetInt("server.port"))}, "")
-		fmt.Printf("dt-runner is running on port:%s, with token:%s\n", port, viper.GetString("webhook.token"))
+		ip := pkg.GetLocalIpV4()
+		fmt.Printf("dt-runner is running on %s:%s, with token:%s\n", ip, port, viper.GetString("webhook.token"))
 		http.ListenAndServe(port, nil)
 	},
 }

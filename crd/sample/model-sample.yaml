@@ -7,7 +7,9 @@ spec:
   - name: prepare
     image: busybox:latest
     command: []
-    args: []
+    args: 
+    - "sh"
+    - "-c"
   - name: check
     image: busybox:latest
     command: []

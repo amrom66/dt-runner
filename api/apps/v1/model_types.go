@@ -40,9 +40,9 @@ type ModelSpec struct {
 }
 
 type ModelStatus struct {
-	StartTime  string
-	Completime string
-	Succeeded  bool
+	StartTime  string `json:"startTime,omitempty"`
+	Completime string `json:"completime,omitempty"`
+	Succeeded  bool   `json:"succeeded,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
