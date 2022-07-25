@@ -4,19 +4,19 @@ metadata:
   name: model-sample
 spec:
   tasks:
-  - name: prepare
-    image: busybox:latest
-    command: []
-    args: 
-    - "sh"
-    - "-c"
-  - name: check
-    image: busybox:latest
-    command: []
-    args: []
+  - name: build
+    image: docker.io/linjinbao66/dt-maven:0.0.3
+    command: ["/bin/sh","-c"]
+    args:
+    - mvn clean package && echo 'success' > /dtswap/build.log
   - name: archive
-    image: "http://minio.dtwave-inc.com"
-    command: []
-    args: []
+    image: docker.io/linjinbao66/dt-mc:0.0.1
+    command: ["/bin/sh","-c"]
+    args: 
+    - while true; do sleep 30 && [ -f '/dtswap/build.log' ] && echo 'success' > /dtswap/archive.log
+      && exit 0 || echo 'file not exists'; done
   variables:
-    myenv: hello
+    repo: https://github.com/linjinbao666/vrmanager.git
+    http_proxy: http://192.168.90.110:1087
+    https_proxy: http://192.168.90.110:1087
+    MAVEN_OPTS: "-DproxySet=true -DproxyHost=192.168.90.110 -DproxyPort=1087"

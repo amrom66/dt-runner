@@ -48,6 +48,11 @@ func GeneratePod(dtJob DtJob) (corev1.Pod, error) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      strings.Join([]string{dtJob.name, ci.Name, model.Name}, "-"), // pod name is combined by dtjob.name ci.name and model.name),
 			Namespace: ci.Namespace,
+			Labels: map[string]string{
+				DefaultLabelDtRunner:      "true",
+				DefaultLabelDtRunnerCi:    ci.Name,
+				DefaultLabelDtRunnerModel: model.Name,
+			},
 		},
 		Spec: corev1.PodSpec{
 			Volumes: []corev1.Volume{

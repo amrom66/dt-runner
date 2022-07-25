@@ -5,7 +5,6 @@ import (
 	crdclientset "dt-runner/generated/clientset/versioned"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/go-playground/webhooks/gitlab"
 	"github.com/spf13/viper"
@@ -14,6 +13,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
 )
+
+// gitlab event -> jobCache
+// schedule task StartPod is used to start pod from jobCache
 
 // ci.name:pod
 var jobCache = make(map[string]corev1.Pod)
@@ -64,43 +66,45 @@ func StartPod() {
 			continue
 		}
 		klog.Info("Generate init pod: ", pod.Name)
+		// 存入缓存中
 		jobCache[ci.Name] = pod
 	}
 
-	// creates the clientset
+	// 矫正已有的pod数据
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		klog.Errorln("build clientset error, ", err)
 		return
 	}
-	klog.Info("begin checking ci and pods")
-	pods, err := clientset.CoreV1().Pods(DefaultNamespace).List(context.TODO(), metav1.ListOptions{})
+	pods, err := clientset.CoreV1().Pods(DefaultNamespace).List(context.TODO(), metav1.ListOptions{
+		LabelSelector: DefaultLabelDtRunner + "=true",
+	})
 	if err != nil {
 		klog.Errorln("list pods error, ", err)
 		return
 	}
 
-	podsClient := clientset.CoreV1().Pods(DefaultNamespace)
+	//items 是pod数据快照
 	items := make(map[string]string)
 	for _, v := range pods.Items {
-		names := strings.Split(v.Name, "-")
-		if len(names) == 2 {
-			items[names[1]] = v.Name
-		}
+		ciname := v.Labels[DefaultLabelDtRunnerCi]
+		podname := v.Name
+		items[ciname] = podname
 	}
+
+	//启动pod 如果pod已经存在，则跳过
+	podsClient := clientset.CoreV1().Pods(DefaultNamespace)
 	for k, v := range jobCache {
-		klog.InfoS("check job: ", k)
+		klog.Info("check job: ", k)
 		if _, ok := items[k]; ok {
-			klog.InfoS("pod existes, %s", v.Name)
+			klog.Info("pod existes,", v.Name)
 			continue
 		}
-		klog.InfoS("pod info, %s", v)
-		result, err := podsClient.Create(context.TODO(), &v, metav1.CreateOptions{})
+		_, err := podsClient.Create(context.TODO(), &v, metav1.CreateOptions{})
 		if err != nil {
 			klog.Error("pod create error, %s", err.Error())
 			continue
 		}
-		jobCache[k] = *result
 	}
 	klog.Info("end checking ci and pods")
 }
