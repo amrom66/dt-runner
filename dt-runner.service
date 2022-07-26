@@ -1,0 +1,14 @@
+[Unit]
+Description=Dt Runner Service
+After=network.target
+
+[Service]
+Type=simple
+User=amrom
+Group=amrom
+Restart=on-failure
+RestartSec=600s
+ExecStart=/usr/local/bin/dt-runner server
+
+[Install]
+WantedBy=multi-user.target
