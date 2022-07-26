@@ -16,3 +16,19 @@ gen:
 	@echo "will generate files"
 endif
 
+define BUILD_HELP_INFO
+# 编译
+#
+# Example:
+# make build
+endef
+
+.PHONY: build
+ifeq ($(PRINT_HELP),y)
+build:
+	@echo "$$BUILD_HELP_INFO"
+else
+build:
+	@echo "will build files"
+	go build -o dt-runner
+endif
