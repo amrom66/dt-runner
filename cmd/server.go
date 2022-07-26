@@ -5,7 +5,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
+	"k8s.io/klog/v2"
 	"log"
 	"net/http"
 	"os"
@@ -43,7 +43,7 @@ var serverCmd = &cobra.Command{
 
 		port := strings.Join([]string{":", strconv.Itoa(viper.GetInt("server.port"))}, "")
 		ip := pkg.GetLocalIpV4()
-		fmt.Printf("dt-runner is running on %s%s, with token:%s\n", ip, port, viper.GetString("webhook.token"))
+		klog.Infof("dt-runner is running on http://%s%s, with token: %s\n", ip, port, viper.GetString("webhook.token"))
 		http.ListenAndServe(port, nil)
 	},
 }
