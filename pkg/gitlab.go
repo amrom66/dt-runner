@@ -3,6 +3,7 @@ package pkg
 import (
 	"context"
 	crdclientset "dt-runner/generated/clientset/versioned"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -17,7 +18,7 @@ import (
 // gitlab event -> jobCache
 // schedule task StartPod is used to start pod from jobCache
 
-// ci.name:pod
+// job.name:pod
 var jobCache = make(map[string]corev1.Pod)
 
 // GitlabHook is used to hook gitlab
@@ -38,8 +39,9 @@ func GitlabHook(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		klog.Errorln("GeneratePod error, %s", err)
 	}
+	//@todo 矫正，判断如果同一个repo的pod大于3个，则停止插入
 	if dtJob.name != "" && pod.Name != "" {
-		jobCache[dtJob.ci] = pod
+		jobCache[dtJob.name] = pod
 	}
 }
 
@@ -47,6 +49,7 @@ func GitlabHook(w http.ResponseWriter, r *http.Request) {
 // startPod will keep check key:value in jobCache
 func StartPod() {
 
+	//每个ci的默认pod
 	ciclient := crdclientset.NewForConfigOrDie(config)
 	cilist, err := ciclient.AppsV1().Cis(DefaultNamespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
@@ -67,7 +70,7 @@ func StartPod() {
 		}
 		klog.Info("Generate init pod: ", pod.Name)
 		// 存入缓存中
-		jobCache[ci.Name] = pod
+		jobCache[dtjob.name] = pod
 	}
 
 	// 矫正已有的pod数据
@@ -84,19 +87,17 @@ func StartPod() {
 		return
 	}
 
-	//items 是pod数据快照
-	items := make(map[string]string)
+	//poditems 是pod数据快照
+	poditems := make(map[string]struct{})
 	for _, v := range pods.Items {
-		ciname := v.Labels[DefaultLabelDtRunnerCi]
-		podname := v.Name
-		items[ciname] = podname
+		poditems[v.Name] = struct{}{}
 	}
 
 	//启动pod 如果pod已经存在，则跳过
 	podsClient := clientset.CoreV1().Pods(DefaultNamespace)
 	for k, v := range jobCache {
 		klog.Info("check job: ", k)
-		if _, ok := items[k]; ok {
+		if _, ok := poditems[v.Name]; ok {
 			klog.Info("pod existes,", v.Name)
 			continue
 		}
@@ -110,28 +111,34 @@ func StartPod() {
 }
 
 // generateDtJob is used to generate DtJob
+//todo ci is empty
 func generateDtJob(payload interface{}) (dtJob DtJob, err error) {
 	var name = RandomString(6)
 	klog.Info("generateDtJob", name)
 	dtJob.name = name
 	switch payload.(type) {
 	case gitlab.PushEventPayload:
+		klog.Info("event type", "push")
 		push := payload.(gitlab.PushEventPayload)
 		dtJob.branch = "main"
-		dtJob.httpurl = push.Repository.URL
+		dtJob.httpurl = push.Project.GitHTTPURL
 		dtJob.sshurl = push.Project.SSHURL
 		dtJob.ref = push.Ref
 		dtJob.checkoutSHA = push.CheckoutSHA
+		dtJob.ci = push.Project.Name
 	case gitlab.TagEventPayload:
+		klog.Info("event type ", "tag")
 		tag := payload.(gitlab.TagEventPayload)
 		dtJob.branch = "main"
 		dtJob.checkoutSHA = tag.CheckoutSHA
-		dtJob.httpurl = tag.Repository.URL
+		dtJob.httpurl = tag.Project.GitHTTPURL
 		dtJob.ref = tag.Ref
 		dtJob.sshurl = tag.Project.SSHURL
+		dtJob.ci = tag.Project.Name
 	case gitlab.SystemHookPayload:
+		klog.Info("event type ", "system")
 		fmt.Println("system hook")
-		return DtJob{}, nil
+		return DtJob{}, errors.New("system hook")
 	}
 	klog.Info("dtjob name: ", dtJob.name)
 	return dtJob, nil

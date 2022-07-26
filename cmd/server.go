@@ -43,7 +43,7 @@ var serverCmd = &cobra.Command{
 
 		port := strings.Join([]string{":", strconv.Itoa(viper.GetInt("server.port"))}, "")
 		ip := pkg.GetLocalIpV4()
-		fmt.Printf("dt-runner is running on %s:%s, with token:%s\n", ip, port, viper.GetString("webhook.token"))
+		fmt.Printf("dt-runner is running on %s%s, with token:%s\n", ip, port, viper.GetString("webhook.token"))
 		http.ListenAndServe(port, nil)
 	},
 }
