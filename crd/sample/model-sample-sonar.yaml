@@ -1,0 +1,32 @@
+apiVersion: apps.dtwave.com/v1
+kind: Model
+metadata:
+  name: model-sample-sonar
+spec:
+  tasks:
+  - name: verify
+    image: docker.io/linjinbao66/dt-maven:0.0.3
+    command: ["/bin/sh","-c"]
+    args:
+    - mvn clean verify sonar:sonar -Dsonar.projectKey=vrmanager -Dsonar.host.url=http://192.168.90.154:30220 -Dsonar.login=6b6a5b22e5d4aee0f8ae30eb3cbf9541ed34a81d -Dsonar.qualitygate.wait=true && echo 'success' > /dtswap/verify.log
+  - name: build
+    image: docker.io/linjinbao66/dt-maven:0.0.3
+    command: ["/bin/sh","-c"]
+    args:
+    - while true; do sleep 30 && [-f '/dtswap/verify.log' ] && mvn clean package && echo 'success' > /dtswap/build.log
+      && exit 0 || echo 'file not exists'; done
+  - name: archive
+    image: docker.io/linjinbao66/dt-mc:0.0.1
+    command: ["/bin/sh","-c"]
+    args: 
+    - while true; do sleep 30 && [ -f '/dtswap/build.log' ] && mc cp /opt/workspace/target/*.jar myalias/dt-runner/ > /dtswap/archive.log
+      && exit 0 || echo 'file not exists'; done
+  variables:
+    repo: https://github.com/linjinbao666/vrmanager.git
+    http_proxy: http://192.168.90.110:1087
+    https_proxy: http://192.168.90.110:1087
+    MAVEN_OPTS: "-DproxySet=true -DproxyHost=192.168.90.110 -DproxyPort=1087"
+    MINIO_SECRET_KEY: "qRmndLCD20ELxFiub9PbQPqEiAhjhQoP"
+    MINIO_ACCESS_KEY: "64poVfepoIV8WxV6"
+    MINIO_SERVER_URL: "http://192.168.90.154:32385"
+    MC_HOST_myalias: "http://64poVfepoIV8WxV6:qRmndLCD20ELxFiub9PbQPqEiAhjhQoP@192.168.90.154:32385"

@@ -15,7 +15,8 @@ import (
 // DtJob 是对ci和model的封装
 type DtJob struct {
 	name        string
-	ci          string
+	ci          string //关联的ci名称
+	project     string
 	httpurl     string
 	sshurl      string
 	branch      string
@@ -110,7 +111,7 @@ func containers(model appsv1.Model) []corev1.Container {
 	}
 
 	for _, task := range model.Spec.Tasks {
-		klog.Info("container name", task.Name)
+		klog.Info("container name: ", task.Name)
 		containers = append(containers, corev1.Container{
 			Name:       task.Name,
 			Image:      task.Image,

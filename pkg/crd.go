@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -210,6 +211,26 @@ func GetCi(namespace string, name string) *appsv1.Ci {
 		return &appsv1.Ci{}
 	}
 	return ci
+}
+
+func UpdateCi(namespace string, name string, podName string, status string) {
+	ciclient := crdclientset.NewForConfigOrDie(config)
+	ci, err := ciclient.AppsV1().Cis(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	if err != nil {
+		fmt.Println("get ci error", err)
+	}
+	ci.Status.Histroy = append(ci.Status.Histroy, appsv1.Histroy{
+		CiName:  ci.Name,
+		PodName: podName,
+		Time:    time.Now().Format("2006-01-02 15:04:05"),
+		Status:  status,
+	})
+
+	_, err = ciclient.AppsV1().Cis(namespace).UpdateStatus(context.TODO(), ci, metav1.UpdateOptions{})
+	if err != nil {
+		fmt.Println("update ci error", err)
+	}
+	klog.Info("update ci finished: ", ci.Name)
 }
 
 func GetModel(namespace string, name string) *appsv1.Model {

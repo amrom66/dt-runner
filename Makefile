@@ -46,6 +46,6 @@ buildamd:
 	@echo "$$BUILDAMD_HELP_INFO"
 else
 buildamd:
-	@echo "will build files"
+	@echo "dt-runner binary file for linux amd64 will build"
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o dt-runner-amd64
 endif

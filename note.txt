@@ -1,0 +1,1 @@
+mvn clean verify sonar:sonar   -Dsonar.projectKey=vrmanager   -Dsonar.host.url=http://192.168.90.154:30220   -Dsonar.login=6b6a5b22e5d4aee0f8ae30eb3cbf9541ed34a81d -Dsonar.qualitygate.wait=true

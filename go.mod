@@ -7,10 +7,10 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/viper v1.12.0
-	k8s.io/api v0.24.2
+	k8s.io/api v0.24.3
 	k8s.io/apiextensions-apiserver v0.24.2
-	k8s.io/apimachinery v0.24.2
-	k8s.io/client-go v0.24.2
+	k8s.io/apimachinery v0.24.3
+	k8s.io/client-go v0.24.3
 	k8s.io/code-generator v0.24.2
 	k8s.io/klog/v2 v2.60.1
 )

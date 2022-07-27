@@ -41,19 +41,25 @@ func GitlabHook(w http.ResponseWriter, r *http.Request) {
 	if error != nil {
 		klog.Errorln("generateDtJob error, %s", err)
 	}
-	klog.Info("dtjob name: ", dtJob.name)
-	pod, err := GeneratePod(dtJob)
-	if err != nil {
-		klog.Errorln("GeneratePod error, %s", err)
-	}
-	//todo 矫正，连续触发限流 1分钟1次触发
-	value, found := ciCache.Get(dtJob.ci)
-	if found {
-		klog.Info("ci still in cache, this happens may because of quick trigger: ", value)
-	} else if dtJob.name != "" && pod.Name != "" {
-		ciCache.Set(dtJob.ci, dtJob.name, cache.DefaultExpiration)
-		klog.Info("ci will be cached: ", dtJob.name)
-		jobCache[dtJob.name] = pod
+
+	dtJobs := attachDtJob(dtJob)
+
+	for _, job := range dtJobs {
+		pod, err := GeneratePod(job)
+		if err != nil {
+			klog.Errorln("GeneratePod error, %s", err)
+		}
+		//todo 矫正，连续触发限流 1分钟1次触发
+		value, found := ciCache.Get(job.ci)
+		if found {
+			klog.Info("ci still in cache, this happens may because of quick trigger: ", value)
+		} else if job.name != "" && pod.Name != "" {
+			ciCache.Set(job.ci, job.name, cache.DefaultExpiration)
+			klog.Info("ci will be cached: ", job.ci)
+			jobCache[job.name] = pod
+			//ci update
+			UpdateCi(DefaultNamespace, job.ci, pod.Name, "SCHEDULED")
+		}
 	}
 }
 
@@ -118,6 +124,7 @@ func StartPod() {
 			klog.Error("pod create error, %s", err.Error())
 			continue
 		}
+		UpdateCi(DefaultNamespace, v.Labels[DefaultLabelDtRunnerCi], v.Name, "STARTED")
 		klog.Info("pod start success", v.Name)
 		delete(jobCache, k)
 	}
@@ -125,11 +132,7 @@ func StartPod() {
 }
 
 // generateDtJob is used to generate DtJob
-//todo ci is empty
 func generateDtJob(payload interface{}) (dtJob DtJob, err error) {
-	var name = RandomString(6)
-	klog.Info("generateDtJob", name)
-	dtJob.name = name
 	switch payload.(type) {
 	case gitlab.PushEventPayload:
 		klog.Info("event type: ", "push")
@@ -139,7 +142,7 @@ func generateDtJob(payload interface{}) (dtJob DtJob, err error) {
 		dtJob.sshurl = push.Project.SSHURL
 		dtJob.ref = push.Ref
 		dtJob.checkoutSHA = push.CheckoutSHA
-		dtJob.ci = push.Project.Name
+		dtJob.project = push.Project.Name
 	case gitlab.TagEventPayload:
 		klog.Info("event type: ", "tag")
 		tag := payload.(gitlab.TagEventPayload)
@@ -148,12 +151,26 @@ func generateDtJob(payload interface{}) (dtJob DtJob, err error) {
 		dtJob.httpurl = tag.Project.GitHTTPURL
 		dtJob.ref = tag.Ref
 		dtJob.sshurl = tag.Project.SSHURL
-		dtJob.ci = tag.Project.Name
+		dtJob.project = tag.Project.Name
 	case gitlab.SystemHookPayload:
 		klog.Info("event type: ", "system")
 		klog.Info("system hook")
 		return DtJob{}, errors.New("system hook")
 	}
-	klog.Info("dtjob name: ", dtJob.name)
 	return dtJob, nil
+}
+
+// attach ci info to dtjob
+func attachDtJob(dtJob DtJob) []DtJob {
+	var dtJobs []DtJob
+	ciList := ListCis(DefaultNamespace).Items
+	for _, ci := range ciList {
+		if ci.Spec.Repo == dtJob.httpurl {
+			var name = RandomString(6)
+			dtJob.name = name
+			dtJob.ci = ci.Name
+			dtJobs = append(dtJobs, dtJob)
+		}
+	}
+	return dtJobs
 }

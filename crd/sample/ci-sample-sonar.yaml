@@ -1,9 +1,9 @@
 apiVersion: apps.dtwave.com/v1
 kind: Ci
 metadata:
-  name: vrmanager
+  name: vrmanager-sonar
 spec:
-  model: "model-sample"
+  model: "model-sample-sonar"
   repo: "http://192.168.90.154:32578/linjinbao666/vrmanager.git"
   branch: "main"
   term:
@@ -12,5 +12,5 @@ spec:
     - push
     - commit
   variables:
-    PROJECT_NAME: vrmanager
+    PROJECT_NAME: vrmanager-sonar
     SHUXI_VESION: 0.0.1
