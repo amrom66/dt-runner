@@ -117,6 +117,7 @@ func StartPod() {
 		klog.Info("check job: ", k)
 		if _, ok := poditems[v.Name]; ok {
 			klog.Info("pod existes: ", v.Name)
+			UpdateCi(DefaultNamespace, v.Labels[DefaultLabelDtRunnerCi], v.Name, "RUNNING")
 			continue
 		}
 		_, err := podsClient.Create(context.TODO(), &v, metav1.CreateOptions{})
