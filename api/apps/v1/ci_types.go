@@ -32,7 +32,14 @@ type CiSpec struct {
 }
 
 type CiStatus struct {
-	Histroy []string `json:"history,omitempty"`
+	Histroy []Histroy `json:"history,omitempty"`
+}
+
+type Histroy struct {
+	CiName  string `json:"ciName"`
+	PodName string `json:"podName"`
+	Time    string `json:"time"`
+	Status  string `json:"status"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
