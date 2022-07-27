@@ -166,7 +166,7 @@ func attachDtJob(dtJob DtJob) []DtJob {
 	ciList := ListCis(DefaultNamespace).Items
 	for _, ci := range ciList {
 		if ci.Spec.Repo == dtJob.httpurl {
-			var name = RandomString(6)
+			var name = RandStringRunes(6)
 			dtJob.name = name
 			dtJob.ci = ci.Name
 			dtJobs = append(dtJobs, dtJob)

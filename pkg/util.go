@@ -4,7 +4,12 @@ import (
 	"math/rand"
 	"net"
 	"strings"
+	"time"
 )
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
 
 var defaultLetters = []rune("abcdefghijklmnopqrstuvwxyz")
 
@@ -23,6 +28,14 @@ func RandomString(n int, allowedChars ...[]rune) string {
 		b[i] = letters[rand.Intn(len(letters))]
 	}
 
+	return string(b)
+}
+
+func RandStringRunes(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = defaultLetters[rand.Intn(len(defaultLetters))]
+	}
 	return string(b)
 }
 
