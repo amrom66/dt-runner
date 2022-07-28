@@ -43,7 +43,7 @@ journalctl -u dt-runner
 
 * 注册到gitlab系统服务
 
-在gilab管理员页面，找到system hook，添加一个新的hook，地址为上一步的dt-runner的地址
+在`gilab`管理员页面，找到`system hook`，添加一个新的`hook`，地址为上一步的`dt-runner`的地址
 
 * 验证可用
 
@@ -72,6 +72,6 @@ spec:
 kubectl apply -f vrmanager.yaml
 ```
 
-注意：repo应该是gitlab的仓库地址
+注意：`repo`应该是`gitlab`的仓库地址
 
-正常commit信息到repo，观察dt-runner的日志，如果有新的commit，则会创建新的pod
+正常`commit`信息到`repo`，观察`dt-runner`的日志，如果有新的`commit`，则会创建新的`pod`

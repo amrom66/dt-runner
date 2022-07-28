@@ -5,11 +5,11 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"k8s.io/klog/v2"
 )
 
 // config for whole program
@@ -19,9 +19,11 @@ var cfgFile string
 var rootCmd = &cobra.Command{
 	Use:   "dt-runner",
 	Short: "runner for dtwave ci",
-	Long: `dt runner is a runner for dtwave ci.
+	Long: `
+Dt runner is a runner for dtwave ci.
 It will run for self-hosted gitlab service, 
-working as a centeralized compling service.`,
+Working as a centeralized compling service.
+`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -49,7 +51,7 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		home, err := os.Getwd()
-		fmt.Println("Using config from path:", home)
+		klog.Infoln("Using config from path:", home)
 		cobra.CheckErr(err)
 
 		viper.AddConfigPath(home)
@@ -63,6 +65,6 @@ func initConfig() {
 	viper.SetDefault("server.runtime", "kubernetes")
 
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+		klog.Infoln("Using config file:", viper.ConfigFileUsed())
 	}
 }

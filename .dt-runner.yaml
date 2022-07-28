@@ -1,7 +1,6 @@
 app:
   name: dt-runner
   log: dt-runner.log
-  workspace: "/tmp"
 webhook:
   token: 123456
 

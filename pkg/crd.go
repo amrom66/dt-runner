@@ -2,8 +2,6 @@ package pkg
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"time"
 
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -163,10 +161,10 @@ func Watch(kubeconfig string) {
 	// init kubernetes client
 	var err error
 	if kubeconfig == "" {
-		log.Printf("using in-cluster configuration")
+		klog.InfoS("using in-cluster configuration")
 		config, err = rest.InClusterConfig()
 	} else {
-		log.Printf("using configuration from '%s'", kubeconfig)
+		klog.InfoS("using configuration from '%s'", kubeconfig)
 		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
 	}
 	if err != nil {
@@ -187,7 +185,7 @@ func ListModels(namespace string) *appsv1.ModelList {
 	modelclient := crdclientset.NewForConfigOrDie(config)
 	modelList, err := modelclient.AppsV1().Models(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		fmt.Println("list model error", err)
+		klog.InfoS("list model error", err)
 		return &appsv1.ModelList{}
 	}
 	return modelList
@@ -197,7 +195,7 @@ func ListCis(namespace string) *appsv1.CiList {
 	ciclient := crdclientset.NewForConfigOrDie(config)
 	cilist, err := ciclient.AppsV1().Cis(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		fmt.Println("list cis error", err)
+		klog.InfoS("list cis error", err)
 		return &appsv1.CiList{}
 	}
 	return cilist
@@ -207,7 +205,7 @@ func GetCi(namespace string, name string) *appsv1.Ci {
 	ciclient := crdclientset.NewForConfigOrDie(config)
 	ci, err := ciclient.AppsV1().Cis(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
-		fmt.Println("get ci error", err)
+		klog.InfoS("get ci error", err)
 		return &appsv1.Ci{}
 	}
 	return ci
@@ -217,7 +215,7 @@ func UpdateCi(namespace string, name string, podName string, status string) {
 	ciclient := crdclientset.NewForConfigOrDie(config)
 	ci, err := ciclient.AppsV1().Cis(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
-		fmt.Println("get ci error", err)
+		klog.InfoS("get ci error", err)
 	}
 	ci.Status.Histroy = append(ci.Status.Histroy, appsv1.Histroy{
 		CiName:  ci.Name,
@@ -228,7 +226,7 @@ func UpdateCi(namespace string, name string, podName string, status string) {
 
 	_, err = ciclient.AppsV1().Cis(namespace).UpdateStatus(context.TODO(), ci, metav1.UpdateOptions{})
 	if err != nil {
-		fmt.Println("update ci error", err)
+		klog.InfoS("update ci error", err)
 	}
 	klog.Info("update ci finished: ", ci.Name)
 }
@@ -237,7 +235,7 @@ func GetModel(namespace string, name string) *appsv1.Model {
 	modelClient := crdclientset.NewForConfigOrDie(config)
 	model, err := modelClient.AppsV1().Models(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
-		fmt.Println("get model err", model)
+		klog.InfoS("get model err", model)
 		return &appsv1.Model{}
 	}
 	return model

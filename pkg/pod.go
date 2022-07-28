@@ -91,11 +91,11 @@ func check(ci appsv1.Ci, model appsv1.Model) bool {
 	re := regexp.MustCompile("^http|https://github.com|gitlab.com|dtwave-inc.com/*")
 	result := re.FindAllStringSubmatch(ci.Spec.Repo, -1)
 	if result == nil {
-		fmt.Println("repo is not matched, repo:", ci.Spec.Repo)
+		klog.Info("repo is not matched, repo:", ci.Spec.Repo)
 		return false
 	}
 	if len(model.Spec.Tasks) > 5 {
-		fmt.Println("Number of model task should not be more than 5.")
+		klog.Info("Number of model task should not be more than 5.")
 		return false
 	}
 	return true

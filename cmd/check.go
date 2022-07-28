@@ -12,6 +12,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"k8s.io/klog/v2"
 )
 
 // checkCmd represents the check command
@@ -25,12 +26,12 @@ var checkCmd = &cobra.Command{
 4. check workspace`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := checkConfig(); err != nil {
-			fmt.Println(err)
+			klog.Errorln(err)
 			os.Exit(1)
 		}
-		fmt.Println()
-		fmt.Println("all config checked success, now you can start dt-runer by `dt-runner server`")
-		fmt.Println()
+		klog.Infoln()
+		klog.Infoln("all config checked success, now you can start dt-runer by `dt-runner server`")
+		klog.Infoln()
 	},
 }
 
