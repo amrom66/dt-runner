@@ -164,7 +164,7 @@ func Watch(kubeconfig string) {
 		klog.InfoS("using in-cluster configuration")
 		config, err = rest.InClusterConfig()
 	} else {
-		klog.InfoS("using configuration from '%s'", kubeconfig)
+		klog.Infof("using configuration from %s", kubeconfig)
 		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
 	}
 	if err != nil {
