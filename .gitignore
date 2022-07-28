@@ -1,6 +1,7 @@
 # Binaries for programs and plugins
 dt-runner
 dt-runner-amd64
+dt-runner.log
 *.exe
 *.exe~
 *.dll

@@ -4,7 +4,9 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 */
 package main
 
-import "dt-runner/cmd"
+import (
+	"dt-runner/cmd"
+)
 
 func main() {
 	cmd.Execute()

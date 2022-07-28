@@ -7,9 +7,9 @@ package cmd
 import (
 	"os"
 
+	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"k8s.io/klog/v2"
 )
 
 // config for whole program
@@ -50,21 +50,20 @@ func initConfig() {
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	} else {
-		home, err := os.Getwd()
-		klog.Infoln("Using config from path:", home)
+		pwd, err := os.Getwd()
+		glog.Infoln("Using config from path:", pwd)
 		cobra.CheckErr(err)
 
-		viper.AddConfigPath(home)
+		viper.AddConfigPath(pwd)
 		viper.SetConfigType("yaml")
 		viper.SetConfigName(".dt-runner")
 	}
 	viper.SetDefault("app.name", "dt-runner")
-	viper.SetDefault("app.log", "dt-runner.log")
+	viper.SetDefault("app.log", "/var/log/dt-runner.log")
 	viper.SetDefault("server.host", "127.0.0.1")
 	viper.SetDefault("server.port", 9001)
 	viper.SetDefault("server.runtime", "kubernetes")
-
 	if err := viper.ReadInConfig(); err == nil {
-		klog.Infoln("Using config file:", viper.ConfigFileUsed())
+		glog.Infoln("Using config file:", viper.ConfigFileUsed())
 	}
 }

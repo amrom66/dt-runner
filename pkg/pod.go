@@ -7,9 +7,9 @@ import (
 
 	appsv1 "dt-runner/api/apps/v1"
 
+	"github.com/golang/glog"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/klog/v2"
 )
 
 // DtJob 是对ci和model的封装
@@ -87,15 +87,15 @@ func check(ci appsv1.Ci, model appsv1.Model) bool {
 	if ci.Namespace != model.Namespace {
 		return false
 	}
-	klog.Info("repo name:", ci.Spec.Repo)
+	glog.Info("repo name:", ci.Spec.Repo)
 	re := regexp.MustCompile("^http|https://github.com|gitlab.com|dtwave-inc.com/*")
 	result := re.FindAllStringSubmatch(ci.Spec.Repo, -1)
 	if result == nil {
-		klog.Info("repo is not matched, repo:", ci.Spec.Repo)
+		glog.Info("repo is not matched, repo:", ci.Spec.Repo)
 		return false
 	}
 	if len(model.Spec.Tasks) > 5 {
-		klog.Info("Number of model task should not be more than 5.")
+		glog.Info("Number of model task should not be more than 5.")
 		return false
 	}
 	return true
@@ -111,7 +111,7 @@ func containers(model appsv1.Model) []corev1.Container {
 	}
 
 	for _, task := range model.Spec.Tasks {
-		klog.Info("container name: ", task.Name)
+		glog.Info("container name: ", task.Name)
 		containers = append(containers, corev1.Container{
 			Name:       task.Name,
 			Image:      task.Image,

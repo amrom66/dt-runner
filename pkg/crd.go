@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/golang/glog"
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/klog/v2"
 
 	corev1 "k8s.io/api/core/v1"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -55,7 +55,7 @@ type ciController struct {
 
 // newCiController creates a new ciController
 func newCiController(config *rest.Config) *ciController {
-	klog.Infoln("Creating ci controller.")
+	glog.Infoln("Creating ci controller.")
 	kubeClient := kubernetes.NewForConfigOrDie(config)
 	apiextensionsClient := apiextensionsclientset.NewForConfigOrDie(config)
 	ciClient := crdclientset.NewForConfigOrDie(config)
@@ -64,24 +64,24 @@ func newCiController(config *rest.Config) *ciController {
 	informer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			ci := obj.(*appsv1.Ci)
-			klog.Infof("Added: %v", ci.Name)
-			klog.Info("repo: ", ci.Spec.Repo, " will be watched")
+			glog.Infof("Added: %v", ci.Name)
+			glog.Info("repo: ", ci.Spec.Repo, " will be watched")
 		},
 		UpdateFunc: func(old, new interface{}) {
 			ci := old.(*appsv1.Ci)
-			klog.Infof("Updates: %v", ci.Name)
+			glog.Infof("Updates: %v", ci.Name)
 		},
 		DeleteFunc: func(obj interface{}) {
 			ci := obj.(*appsv1.Ci)
-			klog.Infof("Deleted: %v", ci.Name)
-			klog.Info("repo :%v", ci.Spec.Repo, " will not be watched")
+			glog.Infof("Deleted: %v", ci.Name)
+			glog.Info("repo :%v", ci.Spec.Repo, " will not be watched")
 		},
 	})
 	informerFactory.Start(wait.NeverStop)
 	utilruntime.Must(appsv1.AddToScheme(crdscheme.Scheme))
 
 	eventBroadcaster := record.NewBroadcaster()
-	eventBroadcaster.StartLogging(klog.Infof)
+	eventBroadcaster.StartLogging(glog.Infof)
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: kubeClient.CoreV1().Events("")})
 	recorder := eventBroadcaster.NewRecorder(crdscheme.Scheme, corev1.EventSource{Component: "ci-controller"})
 	workqueue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
@@ -97,7 +97,7 @@ func newCiController(config *rest.Config) *ciController {
 }
 
 func newModelController(config *rest.Config) *modelController {
-	klog.Infoln("Creating model controller.")
+	glog.Infoln("Creating model controller.")
 	kubeClient := kubernetes.NewForConfigOrDie(config)
 	apiextensionsClient := apiextensionsclientset.NewForConfigOrDie(config)
 	modelClient := crdclientset.NewForConfigOrDie(config)
@@ -106,22 +106,22 @@ func newModelController(config *rest.Config) *modelController {
 	informer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			model := obj.(*appsv1.Model)
-			klog.Infof("Added: %v", model.Name)
+			glog.Infof("Added: %v", model.Name)
 		},
 		UpdateFunc: func(old, new interface{}) {
 			model := old.(*appsv1.Model)
-			klog.Infof("Updates: %v", model.Name)
+			glog.Infof("Updates: %v", model.Name)
 		},
 		DeleteFunc: func(obj interface{}) {
 			model := obj.(*appsv1.Model)
-			klog.Infof("Deleted: %v", model.Name)
+			glog.Infof("Deleted: %v", model.Name)
 		},
 	})
 	informerFactory.Start(wait.NeverStop)
 	utilruntime.Must(appsv1.AddToScheme(crdscheme.Scheme))
 
 	eventBroadcaster := record.NewBroadcaster()
-	eventBroadcaster.StartLogging(klog.Infof)
+	eventBroadcaster.StartLogging(glog.Infof)
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: kubeClient.CoreV1().Events("")})
 	recorder := eventBroadcaster.NewRecorder(crdscheme.Scheme, corev1.EventSource{Component: "model-controller"})
 	workqueue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
@@ -141,7 +141,7 @@ func (ciController *ciController) run() {
 	defer ciController.workqueue.ShutDown()
 	timeoutCh := make(chan struct{})
 	if ok := cache.WaitForCacheSync(timeoutCh, ciController.informer.HasSynced); !ok {
-		klog.Fatalln("Timeout expired during waiting for caches to sync.")
+		glog.Fatalln("Timeout expired during waiting for caches to sync.")
 	}
 	select {}
 }
@@ -151,7 +151,7 @@ func (modelController *modelController) run() {
 	defer modelController.workqueue.ShutDown()
 	timeoutCh := make(chan struct{})
 	if ok := cache.WaitForCacheSync(timeoutCh, modelController.informer.HasSynced); !ok {
-		klog.Fatalln("Timeout expired during waiting for caches to sync.")
+		glog.Fatalln("Timeout expired during waiting for caches to sync.")
 	}
 	select {}
 }
@@ -161,10 +161,10 @@ func Watch(kubeconfig string) {
 	// init kubernetes client
 	var err error
 	if kubeconfig == "" {
-		klog.InfoS("using in-cluster configuration")
+		glog.Info("using in-cluster configuration")
 		config, err = rest.InClusterConfig()
 	} else {
-		klog.Infof("using configuration from %s", kubeconfig)
+		glog.Infof("using configuration from %s", kubeconfig)
 		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
 	}
 	if err != nil {
@@ -177,7 +177,7 @@ func Watch(kubeconfig string) {
 	ciController.run()
 	modelController.run()
 
-	klog.Infoln("Starting custom controller.")
+	glog.Infoln("Starting custom controller.")
 
 }
 
@@ -185,7 +185,7 @@ func ListModels(namespace string) *appsv1.ModelList {
 	modelclient := crdclientset.NewForConfigOrDie(config)
 	modelList, err := modelclient.AppsV1().Models(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		klog.InfoS("list model error", err)
+		glog.Info("list model error", err)
 		return &appsv1.ModelList{}
 	}
 	return modelList
@@ -195,7 +195,7 @@ func ListCis(namespace string) *appsv1.CiList {
 	ciclient := crdclientset.NewForConfigOrDie(config)
 	cilist, err := ciclient.AppsV1().Cis(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		klog.InfoS("list cis error", err)
+		glog.Info("list cis error", err)
 		return &appsv1.CiList{}
 	}
 	return cilist
@@ -205,7 +205,7 @@ func GetCi(namespace string, name string) *appsv1.Ci {
 	ciclient := crdclientset.NewForConfigOrDie(config)
 	ci, err := ciclient.AppsV1().Cis(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
-		klog.InfoS("get ci error", err)
+		glog.Info("get ci error", err)
 		return &appsv1.Ci{}
 	}
 	return ci
@@ -215,7 +215,7 @@ func UpdateCi(namespace string, name string, podName string, status string) {
 	ciclient := crdclientset.NewForConfigOrDie(config)
 	ci, err := ciclient.AppsV1().Cis(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
-		klog.InfoS("get ci error", err)
+		glog.Info("get ci error", err)
 	}
 	ci.Status.Histroy = append(ci.Status.Histroy, appsv1.Histroy{
 		CiName:  ci.Name,
@@ -226,16 +226,16 @@ func UpdateCi(namespace string, name string, podName string, status string) {
 
 	_, err = ciclient.AppsV1().Cis(namespace).UpdateStatus(context.TODO(), ci, metav1.UpdateOptions{})
 	if err != nil {
-		klog.InfoS("update ci error", err)
+		glog.Info("update ci error", err)
 	}
-	klog.Info("update ci finished: ", ci.Name)
+	glog.Info("update ci finished: ", ci.Name)
 }
 
 func GetModel(namespace string, name string) *appsv1.Model {
 	modelClient := crdclientset.NewForConfigOrDie(config)
 	model, err := modelClient.AppsV1().Models(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
-		klog.InfoS("get model err", model)
+		glog.Info("get model err", model)
 		return &appsv1.Model{}
 	}
 	return model

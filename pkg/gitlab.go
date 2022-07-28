@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/go-playground/webhooks/gitlab"
+	"github.com/golang/glog"
 	"github.com/patrickmn/go-cache"
 	"github.com/spf13/viper"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/klog/v2"
 )
 
 // gitlab event -> jobCache
@@ -34,12 +34,12 @@ func GitlabHook(w http.ResponseWriter, r *http.Request) {
 	hook, _ := gitlab.New(gitlab.Options.Secret(secret))
 	payload, err := hook.Parse(r, gitlab.PushEvents, gitlab.TagEvents, gitlab.SystemHookEvents)
 	if err != nil {
-		klog.Errorln("start gitlabhook error, %s", err)
+		glog.Errorln("start gitlabhook error, %s", err)
 		return
 	}
 	dtJob, error := generateDtJob(payload)
 	if error != nil {
-		klog.Errorln("generateDtJob error, %s", err)
+		glog.Errorln("generateDtJob error, %s", err)
 	}
 
 	dtJobs := attachDtJob(dtJob)
@@ -47,15 +47,15 @@ func GitlabHook(w http.ResponseWriter, r *http.Request) {
 	for _, job := range dtJobs {
 		pod, err := GeneratePod(job)
 		if err != nil {
-			klog.Errorln("GeneratePod error, %s", err)
+			glog.Errorln("GeneratePod error, %s", err)
 		}
 		//todo 矫正，连续触发限流 1分钟1次触发
 		value, found := ciCache.Get(job.ci)
 		if found {
-			klog.Info("ci still in cache, this happens may because of quick trigger: ", value)
+			glog.Info("ci still in cache, this happens may because of quick trigger: ", value)
 		} else if job.name != "" && pod.Name != "" {
 			ciCache.Set(job.ci, job.name, cache.DefaultExpiration)
-			klog.Info("ci will be cached: ", job.ci)
+			glog.Info("ci will be cached: ", job.ci)
 			jobCache[job.name] = pod
 			//ci update
 			UpdateCi(DefaultNamespace, job.ci, pod.Name, "SCHEDULED")
@@ -71,11 +71,11 @@ func StartPod() {
 	ciclient := crdclientset.NewForConfigOrDie(config)
 	cilist, err := ciclient.AppsV1().Cis(DefaultNamespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		klog.Errorln("list cis error: ", err)
+		glog.Errorln("list cis error: ", err)
 		return
 	}
 	for _, ci := range cilist.Items {
-		klog.Info("ci name: ", ci.Name)
+		glog.Info("ci name: ", ci.Name)
 		dtjob := DtJob{
 			name:   "init",
 			ci:     ci.Name,
@@ -83,10 +83,10 @@ func StartPod() {
 		}
 		pod, err := GeneratePod(dtjob)
 		if err != nil {
-			klog.Errorln("GeneratePod error: ", err)
+			glog.Errorln("GeneratePod error: ", err)
 			continue
 		}
-		klog.Info("Generate init pod: ", pod.Name)
+		glog.Info("Generate init pod: ", pod.Name)
 		// 存入缓存中
 		jobCache[dtjob.name] = pod
 	}
@@ -94,14 +94,14 @@ func StartPod() {
 	// 矫正已有的pod数据
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		klog.Errorln("build clientset error, ", err)
+		glog.Errorln("build clientset error, ", err)
 		return
 	}
 	pods, err := clientset.CoreV1().Pods(DefaultNamespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: DefaultLabelDtRunner + "=true",
 	})
 	if err != nil {
-		klog.Errorln("list pods error, ", err)
+		glog.Errorln("list pods error, ", err)
 		return
 	}
 
@@ -114,29 +114,29 @@ func StartPod() {
 	//启动pod 如果pod已经存在，则跳过
 	podsClient := clientset.CoreV1().Pods(DefaultNamespace)
 	for k, v := range jobCache {
-		klog.Info("check job: ", k)
+		glog.Info("check job: ", k)
 		if _, ok := poditems[v.Name]; ok {
-			klog.Info("pod existes: ", v.Name)
+			glog.Info("pod existes: ", v.Name)
 			UpdateCi(DefaultNamespace, v.Labels[DefaultLabelDtRunnerCi], v.Name, "RUNNING")
 			continue
 		}
 		_, err := podsClient.Create(context.TODO(), &v, metav1.CreateOptions{})
 		if err != nil {
-			klog.Error("pod create error, %s", err.Error())
+			glog.Error("pod create error, %s", err.Error())
 			continue
 		}
 		UpdateCi(DefaultNamespace, v.Labels[DefaultLabelDtRunnerCi], v.Name, "STARTED")
-		klog.Info("pod start success", v.Name)
+		glog.Info("pod start success", v.Name)
 		delete(jobCache, k)
 	}
-	klog.Info("end checking ci and pods")
+	glog.Info("end checking ci and pods")
 }
 
 // generateDtJob is used to generate DtJob
 func generateDtJob(payload interface{}) (dtJob DtJob, err error) {
 	switch payload.(type) {
 	case gitlab.PushEventPayload:
-		klog.Info("event type: ", "push")
+		glog.Info("event type: ", "push")
 		push := payload.(gitlab.PushEventPayload)
 		dtJob.branch = "main"
 		dtJob.httpurl = push.Project.GitHTTPURL
@@ -145,7 +145,7 @@ func generateDtJob(payload interface{}) (dtJob DtJob, err error) {
 		dtJob.checkoutSHA = push.CheckoutSHA
 		dtJob.project = push.Project.Name
 	case gitlab.TagEventPayload:
-		klog.Info("event type: ", "tag")
+		glog.Info("event type: ", "tag")
 		tag := payload.(gitlab.TagEventPayload)
 		dtJob.branch = "main"
 		dtJob.checkoutSHA = tag.CheckoutSHA
@@ -154,8 +154,8 @@ func generateDtJob(payload interface{}) (dtJob DtJob, err error) {
 		dtJob.sshurl = tag.Project.SSHURL
 		dtJob.project = tag.Project.Name
 	case gitlab.SystemHookPayload:
-		klog.Info("event type: ", "system")
-		klog.Info("system hook")
+		glog.Info("event type: ", "system")
+		glog.Info("system hook")
 		return DtJob{}, errors.New("system hook")
 	}
 	return dtJob, nil

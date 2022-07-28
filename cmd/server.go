@@ -5,13 +5,12 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
-	"k8s.io/klog/v2"
+	"github.com/golang/glog"
 
 	"dt-runner/pkg"
 
@@ -46,12 +45,12 @@ var serverCmd = &cobra.Command{
 		if serverHost == "" {
 			serverHost = pkg.GetLocalIpV4()
 		} else {
-			klog.Info("flag server.host is set, will use flag from command line")
+			glog.Info("flag server.host is set, will use flag from command line")
 			viper.Set("server.host", serverHost)
 		}
 		port := strings.Join([]string{":", strconv.Itoa(viper.GetInt("server.port"))}, "")
 
-		klog.Infof("dt-runner is running on http://%s%s, with token: %s\n", serverHost, port, viper.GetString("webhook.token"))
+		glog.Infof("dt-runner is running on http://%s%s, with token: %s\n", serverHost, port, viper.GetString("webhook.token"))
 		http.ListenAndServe(port, nil)
 	},
 }
@@ -60,7 +59,8 @@ func init() {
 	rootCmd.AddCommand(serverCmd)
 	home, err := os.UserHomeDir()
 	if err != nil {
-		log.Panicln(err)
+		glog.Errorf("get user home dir error: %v", err)
+		os.Exit(1)
 	}
 	serverCmd.PersistentFlags().StringVar(&kubeconfig, "kubeconfig", home+"/.kube/config",
 		"kubeconfig file(default is $HOME/.kube/config)")
