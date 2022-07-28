@@ -5,6 +5,7 @@ import (
 	crdclientset "dt-runner/generated/clientset/versioned"
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-playground/webhooks/gitlab"
@@ -77,7 +78,7 @@ func StartPod() {
 	for _, ci := range cilist.Items {
 		glog.Info("ci name: ", ci.Name)
 		dtjob := DtJob{
-			name:   "init",
+			name:   strings.Join([]string{"init", ci.Name}, "-"),
 			ci:     ci.Name,
 			branch: "main",
 		}
@@ -117,7 +118,7 @@ func StartPod() {
 		glog.Info("check job: ", k)
 		if _, ok := poditems[v.Name]; ok {
 			glog.Info("pod existes: ", v.Name)
-			UpdateCi(DefaultNamespace, v.Labels[DefaultLabelDtRunnerCi], v.Name, "RUNNING")
+			// UpdateCi(DefaultNamespace, v.Labels[DefaultLabelDtRunnerCi], v.Name, "RUNNING")
 			continue
 		}
 		_, err := podsClient.Create(context.TODO(), &v, metav1.CreateOptions{})
@@ -126,7 +127,7 @@ func StartPod() {
 			continue
 		}
 		UpdateCi(DefaultNamespace, v.Labels[DefaultLabelDtRunnerCi], v.Name, "STARTED")
-		glog.Info("pod start success", v.Name)
+		glog.Info("pod start success: ", v.Name)
 		delete(jobCache, k)
 	}
 	glog.Info("end checking ci and pods")

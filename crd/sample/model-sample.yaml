@@ -13,7 +13,7 @@ spec:
     image: docker.io/linjinbao66/dt-mc:0.0.1
     command: ["/bin/sh","-c"]
     args: 
-    - while true; do sleep 30 && [ -f '/dtswap/build.log' ] && mc cp /opt/workspace/target/*.jar myalias/dt-runner/ > /dtswap/archive.log
+    - while true; do sleep 30 && [ -f '/dtswap/build.log' ] && mc cp /opt/workspace/target/*.jar myalias/dt-runner/`date +%s`/ > /dtswap/archive.log
       && exit 0 || echo 'file not exists'; done
   variables:
     repo: https://github.com/linjinbao666/vrmanager.git
