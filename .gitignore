@@ -2,6 +2,7 @@
 dt-runner
 dt-runner-amd64
 dt-runner.log
+log
 *.exe
 *.exe~
 *.dll
