@@ -43,7 +43,9 @@ var serverCmd = &cobra.Command{
 		c.Start()
 		go pkg.Watch(kubeconfig)
 
-		if serverHost != "localhost" {
+		if serverHost == "" {
+			serverHost = pkg.GetLocalIpV4()
+		} else {
 			klog.Info("flag server.host is set, will use flag from command line")
 			viper.Set("server.host", serverHost)
 		}
@@ -63,7 +65,7 @@ func init() {
 	serverCmd.PersistentFlags().StringVar(&kubeconfig, "kubeconfig", home+"/.kube/config",
 		"kubeconfig file(default is $HOME/.kube/config)")
 
-	serverCmd.Flags().StringVar(&serverHost, "server.host", "localhost", "server host")
+	serverCmd.Flags().StringVar(&serverHost, "server.host", "", "server host")
 
 	serverCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
