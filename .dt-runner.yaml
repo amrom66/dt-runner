@@ -1,6 +1,6 @@
 app:
   name: dt-runner
-  log: "/Users/amrom/code/dt-runner/log"
+  log: "/var/log/dt-runner"
 webhook:
   token: 123456
 
