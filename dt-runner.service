@@ -12,3 +12,4 @@ ExecStart=/usr/local/bin/dt-runner server
 
 [Install]
 WantedBy=multi-user.target
+
